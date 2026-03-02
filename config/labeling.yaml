@@ -1,0 +1,15 @@
+# Labeling configuration for 60+ DPD binary target
+#
+# horizon_months:  forward-looking window from each observation date (inclusive)
+# dpd_threshold:   minimum days-past-due that constitutes a "bad" event
+# *_col:           column names in the raw loan-month panel
+# output_path:     where the labeled parquet artifact is written
+
+horizon_months: 12
+dpd_threshold: 60
+
+loan_id_col: loan_id
+date_col: reporting_month
+dpd_col: dpd
+
+output_path: data/processed/labeled.parquet
