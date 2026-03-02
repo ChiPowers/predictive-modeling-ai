@@ -7,9 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from training.train_baseline import run, _evaluate, _load_config
-from sklearn.pipeline import Pipeline
-
+from training.train_baseline import _evaluate, run
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -1,10 +1,10 @@
 """Tests for training/split.py."""
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
-from training.split import split_by_time, SplitResult
+from training.split import SplitResult, split_by_time
 
 
 def _make_df(n_days: int = 365 * 3, seed: int = 0) -> pd.DataFrame:
