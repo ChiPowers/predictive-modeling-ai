@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     test_split: float = Field(default=0.2, ge=0.05, le=0.5)
     forecast_horizon: int = Field(default=30, description="Number of periods to forecast")
 
+    # ── FRED ───────────────────────────────────────────────────────────────
+    fred_api_key: str | None = Field(
+        default=None,
+        description="FRED API key — https://fred.stlouisfed.org/docs/api/api_key.html",
+    )
+
     # ── Service ────────────────────────────────────────────────────────────
     api_host: str = Field(default="0.0.0.0")
     api_port: int = Field(default=8000)

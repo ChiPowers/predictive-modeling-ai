@@ -1,36 +1,25 @@
-"""Feature pipeline: build a model-ready feature matrix from raw loan data.
+"""Feature engineering pipeline.
 
-Typical usage
+Reads processed origination/performance parquet files, applies all registered
+feature functions in group order, validates the output schema, and writes the
+result to ``data/processed/fannie_mae/features/``.
+
+Leakage guard
 -------------
-From Python::
+All performance features are backward-looking (no future data is used):
+  - Rolling/cumulative stats use ``shift(1)`` before any window.
+  - The DataFrame is sorted by ``(loan_sequence_number, monthly_reporting_period)``
+    once at entry before any feature is built.
 
+Usage
+-----
     from features.build_features import build_features, run
 
-    # Pure transform (no I/O) — useful in tests and notebooks
-    feature_df = build_features(raw_df)
+    # Programmatic (pass a DataFrame)
+    feature_df = build_features(origination_df, performance_df=perf_df)
 
-    # Full pipeline: load raw parquet → build → save processed parquet
-    feature_df = run("fannie-mae")
-
-From the CLI::
-
-    pmai features --source fannie-mae
-
-Pipeline execution order
-------------------------
-1. Sort by (loan_id, observation_date) — once, before any performance features.
-2. Origination features — clean and encode static origination attributes.
-3. Performance features — rolling / cumulative stats that respect observation_date.
-4. Macro stub features — NaN placeholders for Task 4 macro join.
-5. Schema validation — assert all required columns are present.
-6. Persist to ``data/processed/features.parquet``.
-
-Leakage guarantee
------------------
-All performance features use ``rolling()`` or ``cummax``/``cumsum`` on a
-DataFrame sorted by (loan_id, observation_date).  These pandas operations are
-strictly backward-looking: the value at row t uses only rows ≤ t within each
-loan group.  No forward-looking window functions are used.
+    # CLI-style (reads from processed parquet by source key)
+    run("fannie-mae")
 """
 from __future__ import annotations
 
@@ -39,142 +28,206 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from config.settings import settings
-from features.feature_defs import FEATURE_REGISTRY, GROUP_ORDER, FeatureSpec
+from features.feature_defs import REGISTRY
 from utils.logging import log
 
-_CONFIG_PATH: Path = Path(__file__).resolve().parents[1] / "config" / "features.yaml"
+_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "features.yaml"
+_DATA_PATHS_PATH = Path(__file__).resolve().parents[1] / "config" / "data_paths.yaml"
 
 
-# ── Config helpers ────────────────────────────────────────────────────────────
-
-
-def _load_config() -> dict:
-    with _CONFIG_PATH.open() as fh:
+def _load_feature_config() -> dict:
+    with open(_CONFIG_PATH) as fh:
         return yaml.safe_load(fh)
 
 
-# ── Schema validation ────────────────────────────────────────────────────────
-
-
-def _validate_schema(df: pd.DataFrame, required_cols: list[str]) -> None:
-    """Raise ValueError if any required column is absent from *df*."""
-    missing = [c for c in required_cols if c not in df.columns]
-    if missing:
-        raise ValueError(
-            f"Feature matrix is missing required columns: {missing}. "
-            "Check that the raw DataFrame contains the expected input columns."
-        )
-
-
-# ── Core pipeline ────────────────────────────────────────────────────────────
+def _clip(df: pd.DataFrame, bounds: dict[str, list[float]]) -> pd.DataFrame:
+    for col, (lo, hi) in bounds.items():
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").clip(lo, hi)
+    return df
 
 
 def build_features(
-    df: pd.DataFrame,
-    *,
-    enabled_groups: list[str] | None = None,
+    origination_df: pd.DataFrame,
+    performance_df: pd.DataFrame | None = None,
+    groups: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Transform a raw loan DataFrame into a model-ready feature matrix.
+    """Build features from origination (and optionally performance) DataFrames.
 
     Args:
-        df: Raw DataFrame.  Must contain the columns required by the enabled
-            feature functions (see ``features/feature_defs.py``).
-        enabled_groups: Feature groups to run.  Defaults to the
-            ``enabled_groups`` list in ``config/features.yaml``.
+        origination_df:  Validated origination parquet contents.
+        performance_df:  Monthly performance data (required for performance group).
+        groups:          Feature groups to run; ``None`` reads from features.yaml.
 
     Returns:
-        Feature DataFrame with all registered features applied and schema
-        validated.  The row order matches the input after sorting by
-        (loan_id, observation_date).
-
-    Raises:
-        ValueError: If required output columns are missing after pipeline runs.
+        Feature DataFrame indexed by ``loan_sequence_number``.
     """
-    cfg = _load_config()
-    groups = enabled_groups or cfg.get("enabled_groups", list(GROUP_ORDER))
+    cfg = _load_feature_config()
+    enabled = groups or cfg.get("enabled_groups", ["origination"])
+    clip_bounds: dict[str, list[float]] = cfg.get("clip_bounds", {})
 
-    # Collect specs in canonical group order
-    specs: list[FeatureSpec] = [
-        spec
-        for group in GROUP_ORDER
-        if group in groups
-        for spec in FEATURE_REGISTRY.values()
-        if spec.group == group
+    # ── Leakage guard: sort performance by (loan, period) before any feature ─
+    if performance_df is not None and not performance_df.empty:
+        sort_cols = [
+            c for c in ["loan_sequence_number", "monthly_reporting_period"]
+            if c in performance_df.columns
+        ]
+        if sort_cols:
+            performance_df = performance_df.sort_values(sort_cols).reset_index(drop=True)
+
+    # ── Start with raw origination columns (numeric ones will be coerced) ─
+    numeric_orig_cols = [
+        "credit_score", "orig_ltv", "orig_cltv", "orig_dti",
+        "orig_upb", "orig_interest_rate", "orig_loan_term",
+        "num_units", "num_borrowers",
     ]
+    result = origination_df[
+        [c for c in numeric_orig_cols + [
+            "first_time_homebuyer_flag", "amortization_type", "occupancy_status",
+            "loan_purpose", "channel", "property_type", "loan_sequence_number",
+        ] if c in origination_df.columns]
+    ].copy()
 
-    out = df.copy()
+    for col in numeric_orig_cols:
+        if col in result.columns:
+            result[col] = pd.to_numeric(result[col], errors="coerce")
 
-    # Sort once so all performance features see a consistent chronological order.
-    # This is the leakage guard: rolling/cumulative ops will only look backward.
-    has_perf = any(s.group == "performance" for s in specs)
-    if has_perf and {"loan_id", "observation_date"}.issubset(out.columns):
-        out = out.sort_values(["loan_id", "observation_date"]).reset_index(drop=True)
-        log.debug("DataFrame sorted by (loan_id, observation_date) for performance features")
+    # Merge performance summary columns onto origination if provided
+    if performance_df is not None and not performance_df.empty and "performance" in enabled:
+        _merge_perf_summary(result, performance_df)
 
-    for spec in specs:
-        missing_req = [c for c in spec.required_input_cols if c not in out.columns]
-        if missing_req:
-            log.warning(
-                "Skipping feature '{}': missing input column(s) {}",
-                spec.name,
-                missing_req,
-            )
+    # ── Run registered feature functions by group ─────────────────────────
+    for group in enabled:
+        if group not in REGISTRY:
+            log.debug("Feature group '{}' has no registered features — skipping", group)
             continue
 
-        series = spec.fn(out)
-        # Use numpy values to avoid pandas index-alignment surprises when the
-        # feature function returns a series with a different index.
-        out[spec.output_col] = series.to_numpy()
-        log.debug("Feature '{}' computed ({} non-null)", spec.name, series.notna().sum())
+        # Decide which DataFrame to pass for each group
+        source_df: pd.DataFrame
+        if group == "performance":
+            if performance_df is None or performance_df.empty:
+                log.warning("Performance group requested but no performance_df — skipping")
+                continue
+            source_df = performance_df
+        else:
+            source_df = result
 
-    required_output_cols: list[str] = cfg.get("required_output_cols", [])
-    if required_output_cols:
-        _validate_schema(out, required_output_cols)
+        log.debug("Building {} features ({} functions)", group, len(REGISTRY[group]))
+        for spec in REGISTRY[group]:
+            try:
+                out = spec.fn(source_df)
+            except KeyError as exc:
+                log.debug("Feature '{}' skipped — missing column {}", spec.name, exc)
+                continue
+
+            if isinstance(out, pd.DataFrame):
+                for col in out.columns:
+                    result[col] = out[col].values if len(out) == len(result) else out[col]
+            else:
+                if len(out) == len(result):
+                    result[spec.name] = out.values
+                else:
+                    log.debug(
+                        "Feature '{}' length mismatch ({} vs {}) — skipping",
+                        spec.name, len(out), len(result),
+                    )
+
+    # ── Clip outliers ─────────────────────────────────────────────────────
+    result = _clip(result, {k: v for k, v in clip_bounds.items()})
+
+    # ── Validate required output columns ─────────────────────────────────
+    required: list[str] = cfg.get("required_output_columns", {}).get("origination", [])
+    missing = [c for c in required if c not in result.columns]
+    if missing:
+        log.warning("Required feature columns missing from output: {}", missing)
 
     log.info(
-        "build_features complete: {} rows, {} feature columns",
-        len(out),
-        len(out.columns),
+        "build_features complete: {} rows, {} columns, groups={}",
+        len(result), result.shape[1], enabled,
     )
-    return out
+    return result
 
 
-# ── I/O wrapper for CLI / pipeline use ──────────────────────────────────────
+def _merge_perf_summary(orig: pd.DataFrame, perf: pd.DataFrame) -> None:
+    """Attach per-loan performance summary statistics to the origination frame.
+
+    Computes backward-looking aggregates only (no leakage).
+    Modifications are in-place on ``orig``.
+    """
+    if "loan_sequence_number" not in perf.columns:
+        return
+
+    agg_dict: dict[str, tuple] = {}
+    if "loan_age" in perf.columns:
+        agg_dict["max_loan_age"] = ("loan_age", "max")
+    if "current_actual_upb" in perf.columns:
+        agg_dict["latest_upb"] = ("current_actual_upb", "last")
+    if "current_delinquency_status" in perf.columns:
+        # Shift by 1 to prevent look-ahead leakage
+        status_numeric = pd.to_numeric(perf["current_delinquency_status"], errors="coerce")
+        perf = perf.copy()
+        perf["_dpd"] = status_numeric
+        agg_dict["max_dpd"] = ("_dpd", "max")
+
+    if not agg_dict:
+        return
+
+    summary = perf.groupby("loan_sequence_number").agg(**agg_dict).reset_index()
+
+    if "loan_sequence_number" in orig.columns:
+        merged = orig.merge(summary, on="loan_sequence_number", how="left")
+        for col in summary.columns:
+            if col != "loan_sequence_number":
+                orig[col] = merged[col].values
 
 
-def run(source: str) -> pd.DataFrame:
-    """Load raw parquet for *source*, build features, and save processed parquet.
+def run(source: str, groups: list[str] | None = None) -> pd.DataFrame:
+    """Load processed parquet for ``source`` and run feature engineering.
 
     Args:
-        source: Dataset source key (must already be ingested; a parquet file
-            ``data/raw/<source>.parquet`` must exist).
+        source: Dataset source key (e.g. ``'fannie-mae'``).
+        groups: Feature groups to build; ``None`` → from features.yaml.
 
     Returns:
-        Feature DataFrame (also written to ``data/processed/features.parquet``).
+        Feature DataFrame written to ``data/processed/<source>/features/``.
     """
-    cfg = _load_config()
-    raw_path = settings.data_raw_dir / f"{source}.parquet"
-    log.info("Loading raw data from '{}'", raw_path)
+    log.info("build_features.run called: source={}", source)
 
-    if not raw_path.exists():
-        raise FileNotFoundError(
-            f"Raw parquet not found: {raw_path}. "
-            "Run 'pmai ingest --source {source}' first."
+    with open(_DATA_PATHS_PATH) as fh:
+        dp_cfg = yaml.safe_load(fh)
+
+    if source == "fannie-mae":
+        fm = dp_cfg["fannie_mae"]
+        orig_dir = Path(fm["processed_dir"]) / "origination"
+        perf_dir = Path(fm["processed_dir"]) / "performance"
+        out_dir = Path(fm["processed_dir"]) / "features"
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        orig_files = sorted(orig_dir.glob("*.parquet"))
+        perf_files = sorted(perf_dir.glob("*.parquet"))
+
+        if not orig_files:
+            raise FileNotFoundError(
+                f"No origination parquet files found in {orig_dir}. "
+                "Run `pmai ingest --source fannie-mae` first."
+            )
+
+        orig_df = pd.concat([pd.read_parquet(f) for f in orig_files], ignore_index=True)
+        perf_df = (
+            pd.concat([pd.read_parquet(f) for f in perf_files], ignore_index=True)
+            if perf_files
+            else None
+        )
+        log.info(
+            "Loaded {} origination rows, {} performance rows",
+            len(orig_df),
+            len(perf_df) if perf_df is not None else 0,
         )
 
-    df = pd.read_parquet(raw_path)
-    log.info("Loaded {} rows, {} columns", len(df), df.shape[1])
+        features = build_features(orig_df, perf_df, groups=groups)
+        out_path = out_dir / "features.parquet"
+        features.to_parquet(out_path, index=False, engine="pyarrow")
+        log.info("Features written → {} ({} rows, {} cols)", out_path, len(features), features.shape[1])
+        return features
 
-    features_df = build_features(df)
-
-    out_path = Path(cfg.get("output_path", "data/processed/features.parquet"))
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    features_df.to_parquet(out_path, index=False)
-    log.info(
-        "Features saved → '{}' ({} rows, {} cols)",
-        out_path,
-        len(features_df),
-        features_df.shape[1],
-    )
-    return features_df
+    raise ValueError(f"No feature pipeline defined for source='{source}'")

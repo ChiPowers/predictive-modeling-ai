@@ -1,310 +1,227 @@
-"""Feature registry: named feature functions organised by group.
+"""Feature definition registry.
 
-Each feature function has the signature::
+Usage
+-----
+    from features.feature_defs import REGISTRY, FeatureSpec
 
-    fn(df: pd.DataFrame) -> pd.Series
+    # All registered feature specs grouped by group name:
+    for spec in REGISTRY["origination"]:
+        print(spec.name, spec.dtype)
 
-The returned Series must be named with the feature's output column name.
-The pipeline in ``build_features.py`` calls them in group order
-(origination → performance → macro_stub) and assigns each result as a new
-column on the working DataFrame, so later functions can depend on earlier ones.
-
-Registration
-------------
-Use the ``@register`` decorator::
-
-    @register("my_feature", group="origination",
-              required=["raw_col"], produces=["my_feature"])
-    def feat_my_feature(df: pd.DataFrame) -> pd.Series:
-        return pd.to_numeric(df["raw_col"], errors="coerce")
+Each @register-decorated function receives a DataFrame and returns a Series
+(for a single derived column) or a DataFrame (for multiple columns at once).
+The pipeline in build_features.py calls them in registration order.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Callable
 
 import numpy as np
 import pandas as pd
 
-# Type alias for a feature function
-FeatureFn = Callable[[pd.DataFrame], pd.Series]
+# ---------------------------------------------------------------------------
+# Registry infrastructure
+# ---------------------------------------------------------------------------
 
-# Execution order for groups
-GROUP_ORDER: list[str] = ["origination", "performance", "macro_stub"]
+FeatureFn = Callable[[pd.DataFrame], pd.Series | pd.DataFrame]
 
 
 @dataclass
 class FeatureSpec:
-    """Metadata for a single feature."""
-
     name: str
-    fn: FeatureFn
     group: str
-    required_input_cols: list[str] = field(default_factory=list)
-    output_col: str = ""
-
-    def __post_init__(self) -> None:
-        if not self.output_col:
-            self.output_col = self.name
+    fn: FeatureFn
+    dtype: str = "float64"
+    description: str = ""
 
 
-# Global feature registry: feature_name → FeatureSpec
-FEATURE_REGISTRY: dict[str, FeatureSpec] = {}
+REGISTRY: dict[str, list[FeatureSpec]] = {}
 
 
-def register(
-    name: str,
-    *,
-    group: str,
-    required: list[str],
-    produces: str = "",
-) -> Callable[[FeatureFn], FeatureFn]:
-    """Decorator that registers a feature function in FEATURE_REGISTRY."""
+def register(group: str, name: str, dtype: str = "float64", description: str = ""):
+    """Decorator to register a feature function.
 
+    Args:
+        group:       Feature group (e.g. ``'origination'``).
+        name:        Output column name(s).  For multi-column functions, pass
+                     the shared prefix; the fn returns a DataFrame.
+        dtype:       pandas dtype for the output (used for documentation).
+        description: Human-readable description.
+    """
     def decorator(fn: FeatureFn) -> FeatureFn:
-        FEATURE_REGISTRY[name] = FeatureSpec(
-            name=name,
-            fn=fn,
-            group=group,
-            required_input_cols=required,
-            output_col=produces or name,
-        )
+        spec = FeatureSpec(name=name, group=group, fn=fn, dtype=dtype, description=description)
+        REGISTRY.setdefault(group, []).append(spec)
         return fn
-
     return decorator
 
 
-# ── Origination Features ────────────────────────────────────────────────────
-# Static attributes captured at loan origination.
-# These features clean / validate the raw values and encode categoricals.
+# ---------------------------------------------------------------------------
+# ── Origination features ────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+
+_LOG_UPB_CLIP = (9.0, 14.0)  # ln(~$8k) to ln(~$1.2M)
 
 
-@register("fico_score", group="origination", required=["fico_score"])
-def feat_fico_score(df: pd.DataFrame) -> pd.Series:
-    """FICO credit score at origination, clipped to [300, 850]."""
-    return pd.to_numeric(df["fico_score"], errors="coerce").clip(300, 850).rename("fico_score")
+@register("origination", "log_upb", description="Natural log of original UPB")
+def _log_upb(df: pd.DataFrame) -> pd.Series:
+    upb = pd.to_numeric(df["orig_upb"], errors="coerce").clip(lower=1)
+    return upb.apply(math.log).clip(*_LOG_UPB_CLIP).rename("log_upb")
 
 
-@register("ltv", group="origination", required=["ltv"])
-def feat_ltv(df: pd.DataFrame) -> pd.Series:
-    """Loan-to-value ratio at origination (%), clipped to [0, 200]."""
-    return pd.to_numeric(df["ltv"], errors="coerce").clip(0, 200).rename("ltv")
+@register("origination", "is_first_time_homebuyer", dtype="bool",
+          description="1 if first-time homebuyer, 0 otherwise (9 = unknown → NaN)")
+def _is_fthb(df: pd.DataFrame) -> pd.Series:
+    col = df["first_time_homebuyer_flag"].astype(str).str.upper().str.strip()
+    return col.map({"Y": 1.0, "N": 0.0}).rename("is_first_time_homebuyer")
 
 
-@register("dti", group="origination", required=["dti"])
-def feat_dti(df: pd.DataFrame) -> pd.Series:
-    """Debt-to-income ratio (%), clipped to [0, 100]."""
-    return pd.to_numeric(df["dti"], errors="coerce").clip(0, 100).rename("dti")
+@register("origination", "is_high_ltv", dtype="bool",
+          description="1 when orig_ltv > 80 (PMI / default-risk threshold)")
+def _is_high_ltv(df: pd.DataFrame) -> pd.Series:
+    ltv = pd.to_numeric(df["orig_ltv"], errors="coerce")
+    return (ltv > 80).astype(float).rename("is_high_ltv")
 
 
-@register("loan_purpose_enc", group="origination", required=["loan_purpose"], produces="loan_purpose_enc")
-def feat_loan_purpose_enc(df: pd.DataFrame) -> pd.Series:
-    """Encode loan purpose: P=0 (purchase), C=1 (cash-out refi), R=2 (rate/term refi), else 3."""
-    _MAP = {"P": 0, "C": 1, "R": 2}
-    return (
-        df["loan_purpose"].astype(str).str.upper().map(_MAP).fillna(3).astype(np.int8).rename("loan_purpose_enc")
+@register("origination", "is_high_dti", dtype="bool",
+          description="1 when orig_dti > 43 (CFPB qualified-mortgage threshold)")
+def _is_high_dti(df: pd.DataFrame) -> pd.Series:
+    dti = pd.to_numeric(df["orig_dti"], errors="coerce")
+    return (dti > 43).astype(float).rename("is_high_dti")
+
+
+@register("origination", "is_arm", dtype="bool",
+          description="1 for ARM loans, 0 for FRM")
+def _is_arm(df: pd.DataFrame) -> pd.Series:
+    col = df["amortization_type"].astype(str).str.upper().str.strip()
+    return (col == "ARM").astype(float).rename("is_arm")
+
+
+@register("origination", "is_jumbo", dtype="bool",
+          description="1 when original UPB > conforming loan limit ($766,550 for 2024)")
+def _is_jumbo(df: pd.DataFrame) -> pd.Series:
+    upb = pd.to_numeric(df["orig_upb"], errors="coerce")
+    return (upb > 766_550).astype(float).rename("is_jumbo")
+
+
+@register("origination", "occupancy_code", dtype="int8",
+          description="Ordinal: P=0 (primary), I=1 (investment), S=2 (second home)")
+def _occupancy_code(df: pd.DataFrame) -> pd.Series:
+    col = df["occupancy_status"].astype(str).str.upper().str.strip()
+    return col.map({"P": 0, "I": 1, "S": 2}).astype("Int8").rename("occupancy_code")
+
+
+@register("origination", "loan_purpose_code", dtype="int8",
+          description="Ordinal: P=0 (purchase), C=1 (cashout refi), N=2 (no-cashout), R=3 (refi)")
+def _loan_purpose_code(df: pd.DataFrame) -> pd.Series:
+    col = df["loan_purpose"].astype(str).str.upper().str.strip()
+    return col.map({"P": 0, "C": 1, "N": 2, "R": 3}).astype("Int8").rename("loan_purpose_code")
+
+
+@register("origination", "channel_code", dtype="int8",
+          description="Origination channel: R=0 (retail), B=1 (broker), C=2 (correspondent), T=3 (TPO)")
+def _channel_code(df: pd.DataFrame) -> pd.Series:
+    col = df["channel"].astype(str).str.upper().str.strip()
+    return col.map({"R": 0, "B": 1, "C": 2, "T": 3}).astype("Int8").rename("channel_code")
+
+
+@register("origination", "property_type_code", dtype="int8",
+          description="Ordinal: SF=0, CO=1, PU=2, MH=3, CP=4")
+def _property_type_code(df: pd.DataFrame) -> pd.Series:
+    col = df["property_type"].astype(str).str.upper().str.strip()
+    return col.map({"SF": 0, "CO": 1, "PU": 2, "MH": 3, "CP": 4}).astype("Int8").rename(
+        "property_type_code"
     )
 
 
-@register("occupancy_enc", group="origination", required=["occupancy_type"], produces="occupancy_enc")
-def feat_occupancy_enc(df: pd.DataFrame) -> pd.Series:
-    """Encode occupancy type: P=0 (primary), I=1 (investment), S=2 (second home), else 3."""
-    _MAP = {"P": 0, "I": 1, "S": 2}
-    return (
-        df["occupancy_type"].astype(str).str.upper().map(_MAP).fillna(3).astype(np.int8).rename("occupancy_enc")
-    )
+# ---------------------------------------------------------------------------
+# ── Performance features ─────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
 
 
-@register("orig_upb", group="origination", required=["orig_upb"])
-def feat_orig_upb(df: pd.DataFrame) -> pd.Series:
-    """Original unpaid principal balance (non-negative)."""
-    return pd.to_numeric(df["orig_upb"], errors="coerce").clip(lower=0).rename("orig_upb")
+@register("performance", "is_delinquent", dtype="bool",
+          description="1 when delinquency status > 0 (any past-due)")
+def _is_delinquent(df: pd.DataFrame) -> pd.Series:
+    status = df["current_delinquency_status"].astype(str).str.strip()
+    numeric = pd.to_numeric(status, errors="coerce")
+    return (numeric > 0).astype(float).rename("is_delinquent")
 
 
-@register("orig_rate", group="origination", required=["orig_rate"])
-def feat_orig_rate(df: pd.DataFrame) -> pd.Series:
-    """Note rate at origination (%), clipped to [0, 30]."""
-    return pd.to_numeric(df["orig_rate"], errors="coerce").clip(0, 30).rename("orig_rate")
+@register("performance", "delinquency_bucket", dtype="int8",
+          description="0=current, 1=30DPD, 2=60DPD, 3=90+DPD/FC")
+def _delinquency_bucket(df: pd.DataFrame) -> pd.Series:
+    status = pd.to_numeric(df["current_delinquency_status"], errors="coerce")
+    buckets = pd.cut(
+        status,
+        bins=[-1, 0, 1, 2, float("inf")],
+        labels=[0, 1, 2, 3],
+    ).astype("Int8")
+    return buckets.rename("delinquency_bucket")
 
 
-@register("loan_term", group="origination", required=["loan_term"])
-def feat_loan_term(df: pd.DataFrame) -> pd.Series:
-    """Amortization term in months (e.g. 360, 180), non-negative."""
-    return pd.to_numeric(df["loan_term"], errors="coerce").clip(lower=0).rename("loan_term")
+@register("performance", "paydown_ratio",
+          description="(orig_upb - current_actual_upb) / orig_upb — proportion paid down")
+def _paydown_ratio(df: pd.DataFrame) -> pd.Series:
+    orig = pd.to_numeric(df.get("orig_upb"), errors="coerce")
+    current = pd.to_numeric(df.get("current_actual_upb"), errors="coerce")
+    ratio = ((orig - current) / orig.clip(lower=1)).clip(0, 1)
+    return ratio.rename("paydown_ratio")
 
 
-@register("num_units", group="origination", required=["num_units"])
-def feat_num_units(df: pd.DataFrame) -> pd.Series:
-    """Number of units in the property, clipped to [1, 4]."""
-    return pd.to_numeric(df["num_units"], errors="coerce").clip(1, 4).astype(np.int8).rename("num_units")
+@register("performance", "rate_spread",
+          description="current_interest_rate - orig_interest_rate (positive = rate rose)")
+def _rate_spread(df: pd.DataFrame) -> pd.Series:
+    cur_rate = pd.to_numeric(df.get("current_interest_rate"), errors="coerce")
+    orig_rate = pd.to_numeric(df.get("orig_interest_rate"), errors="coerce")
+    return (cur_rate - orig_rate).rename("rate_spread")
 
 
-@register("fthb_flag", group="origination", required=["first_time_homebuyer"], produces="fthb_flag")
-def feat_fthb_flag(df: pd.DataFrame) -> pd.Series:
-    """First-time homebuyer flag: Y/y → 1, all other values → 0."""
-    return df["first_time_homebuyer"].astype(str).str.upper().eq("Y").astype(np.int8).rename("fthb_flag")
+@register("performance", "term_remaining_ratio",
+          description="remaining_months / orig_loan_term — how far through the loan")
+def _term_remaining_ratio(df: pd.DataFrame) -> pd.Series:
+    remaining = pd.to_numeric(df.get("remaining_months_to_legal_maturity"), errors="coerce")
+    orig_term = pd.to_numeric(df.get("orig_loan_term"), errors="coerce")
+    return (remaining / orig_term.clip(lower=1)).clip(0, 1).rename("term_remaining_ratio")
 
 
-# ── Performance Features ────────────────────────────────────────────────────
-# Time-varying attributes computed as of each observation_date.
-# LEAKAGE GUARD: all rolling/cumulative operations work on data sorted by
-# (loan_id, observation_date) and only look back in time (never forward).
-# The pipeline sorts the DataFrame once before running this group.
+@register("performance", "has_been_modified", dtype="bool",
+          description="1 if modification_flag is Y")
+def _has_been_modified(df: pd.DataFrame) -> pd.Series:
+    col = df.get("modification_flag", pd.Series("N", index=df.index))
+    return (col.astype(str).str.upper().str.strip() == "Y").astype(float).rename("has_been_modified")
 
 
-@register(
-    "months_since_orig",
-    group="performance",
-    required=["observation_date", "orig_date"],
-    produces="months_since_orig",
-)
-def feat_months_since_orig(df: pd.DataFrame) -> pd.Series:
-    """Age of loan in whole months: observation_date − orig_date, floored at 0."""
-    obs = pd.to_datetime(df["observation_date"])
-    orig = pd.to_datetime(df["orig_date"])
-    delta = (obs.dt.year - orig.dt.year) * 12 + (obs.dt.month - orig.dt.month)
-    return delta.clip(lower=0).astype(np.int16).rename("months_since_orig")
+@register("performance", "zero_balance_flag", dtype="bool",
+          description="1 if loan has exited (zero balance code present)")
+def _zero_balance_flag(df: pd.DataFrame) -> pd.Series:
+    col = df.get("zero_balance_code", pd.Series(pd.NA, index=df.index))
+    return col.notna().astype(float).rename("zero_balance_flag")
 
 
-@register("current_upb", group="performance", required=["current_upb"])
-def feat_current_upb(df: pd.DataFrame) -> pd.Series:
-    """Current unpaid principal balance at observation_date (non-negative)."""
-    return pd.to_numeric(df["current_upb"], errors="coerce").clip(lower=0).rename("current_upb")
+@register("performance", "loan_age_sq",
+          description="Squared loan age — captures non-linear default hazard")
+def _loan_age_sq(df: pd.DataFrame) -> pd.Series:
+    age = pd.to_numeric(df.get("loan_age"), errors="coerce").clip(0, 480)
+    return (age ** 2).rename("loan_age_sq")
 
 
-@register("delinquency_status", group="performance", required=["delinquency_status"])
-def feat_delinquency_status(df: pd.DataFrame) -> pd.Series:
-    """Months delinquent at observation_date; 0 = current. Missing → 0."""
-    return (
-        pd.to_numeric(df["delinquency_status"], errors="coerce")
-        .fillna(0)
-        .clip(lower=0)
-        .astype(np.int8)
-        .rename("delinquency_status")
-    )
+# ---------------------------------------------------------------------------
+# ── Macro stub features ───────────────────────────────────────────────────────
+# Placeholders filled with NaN until FRED integration is wired up.
+# ---------------------------------------------------------------------------
 
 
-@register(
-    "rolling_30d_dq_3m",
-    group="performance",
-    required=["loan_id", "observation_date", "delinquency_status"],
-    produces="rolling_30d_dq_3m",
-)
-def feat_rolling_30d_dq_3m(df: pd.DataFrame) -> pd.Series:
-    """Flag (0/1): any 30+ day delinquency in the trailing 3 months.
-
-    Uses only history up to and including observation_date (no leakage).
-    DataFrame must already be sorted by (loan_id, observation_date).
-    """
-    dlq = pd.to_numeric(df["delinquency_status"], errors="coerce").fillna(0)
-    flag = (dlq >= 1).astype(int)
-    result = (
-        df.assign(_flag=flag)
-        .groupby("loan_id", sort=False)["_flag"]
-        .transform(lambda s: s.rolling(3, min_periods=1).max())
-        .astype(np.int8)
-    )
-    return result.rename("rolling_30d_dq_3m")
+def _macro_stub(col_name: str) -> FeatureFn:
+    def fn(df: pd.DataFrame) -> pd.Series:
+        return pd.Series(np.nan, index=df.index, name=col_name, dtype="float64")
+    fn.__name__ = f"_macro_{col_name}"
+    return fn
 
 
-@register(
-    "rolling_60d_dq_3m",
-    group="performance",
-    required=["loan_id", "observation_date", "delinquency_status"],
-    produces="rolling_60d_dq_3m",
-)
-def feat_rolling_60d_dq_3m(df: pd.DataFrame) -> pd.Series:
-    """Flag (0/1): any 60+ day delinquency in the trailing 3 months.
-
-    Uses only history up to and including observation_date (no leakage).
-    """
-    dlq = pd.to_numeric(df["delinquency_status"], errors="coerce").fillna(0)
-    flag = (dlq >= 2).astype(int)
-    result = (
-        df.assign(_flag=flag)
-        .groupby("loan_id", sort=False)["_flag"]
-        .transform(lambda s: s.rolling(3, min_periods=1).max())
-        .astype(np.int8)
-    )
-    return result.rename("rolling_60d_dq_3m")
-
-
-@register(
-    "ever_30d_dq",
-    group="performance",
-    required=["loan_id", "observation_date", "delinquency_status"],
-    produces="ever_30d_dq",
-)
-def feat_ever_30d_dq(df: pd.DataFrame) -> pd.Series:
-    """Flag (0/1): loan has EVER been 30+ DQ as of observation_date (cumulative max)."""
-    dlq = pd.to_numeric(df["delinquency_status"], errors="coerce").fillna(0)
-    flag = (dlq >= 1).astype(int)
-    result = (
-        df.assign(_flag=flag)
-        .groupby("loan_id", sort=False)["_flag"]
-        .transform("cummax")
-        .astype(np.int8)
-    )
-    return result.rename("ever_30d_dq")
-
-
-@register(
-    "ever_60d_dq",
-    group="performance",
-    required=["loan_id", "observation_date", "delinquency_status"],
-    produces="ever_60d_dq",
-)
-def feat_ever_60d_dq(df: pd.DataFrame) -> pd.Series:
-    """Flag (0/1): loan has EVER been 60+ DQ as of observation_date."""
-    dlq = pd.to_numeric(df["delinquency_status"], errors="coerce").fillna(0)
-    flag = (dlq >= 2).astype(int)
-    result = (
-        df.assign(_flag=flag)
-        .groupby("loan_id", sort=False)["_flag"]
-        .transform("cummax")
-        .astype(np.int8)
-    )
-    return result.rename("ever_60d_dq")
-
-
-@register(
-    "num_dq_months",
-    group="performance",
-    required=["loan_id", "observation_date", "delinquency_status"],
-    produces="num_dq_months",
-)
-def feat_num_dq_months(df: pd.DataFrame) -> pd.Series:
-    """Cumulative count of months with any delinquency as of observation_date."""
-    dlq = pd.to_numeric(df["delinquency_status"], errors="coerce").fillna(0)
-    flag = (dlq >= 1).astype(int)
-    result = (
-        df.assign(_flag=flag)
-        .groupby("loan_id", sort=False)["_flag"]
-        .transform("cumsum")
-        .astype(np.int16)
-    )
-    return result.rename("num_dq_months")
-
-
-# ── Macro Stub Features ─────────────────────────────────────────────────────
-# Placeholder columns that will be populated via a macro data join in Task 4.
-# They are intentionally NaN so that downstream models can be developed before
-# the macro data pipeline is complete.
-
-
-@register("macro_unemployment_rate", group="macro_stub", required=[], produces="macro_unemployment_rate")
-def feat_macro_unemployment_rate(df: pd.DataFrame) -> pd.Series:
-    """Macro: unemployment rate — stub (NaN). Will be joined in Task 4."""
-    return pd.Series(np.nan, index=df.index, name="macro_unemployment_rate", dtype=np.float64)
-
-
-@register("macro_10yr_treasury", group="macro_stub", required=[], produces="macro_10yr_treasury")
-def feat_macro_10yr_treasury(df: pd.DataFrame) -> pd.Series:
-    """Macro: 10-year treasury rate — stub (NaN). Will be joined in Task 4."""
-    return pd.Series(np.nan, index=df.index, name="macro_10yr_treasury", dtype=np.float64)
-
-
-@register("macro_hpi_change", group="macro_stub", required=[], produces="macro_hpi_change")
-def feat_macro_hpi_change(df: pd.DataFrame) -> pd.Series:
-    """Macro: HPI year-over-year change — stub (NaN). Will be joined in Task 4."""
-    return pd.Series(np.nan, index=df.index, name="macro_hpi_change", dtype=np.float64)
+for _name, _desc in [
+    ("unemployment_rate", "US unemployment rate (FRED UNRATE) — macro stub"),
+    ("mortgage_rate_30yr", "30-yr fixed mortgage rate (FRED MORTGAGE30US) — macro stub"),
+    ("hpi_yoy", "FHFA HPI year-over-year % change — macro stub"),
+]:
+    register("macro_stub", _name, description=_desc)(_macro_stub(_name))
