@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Data and artifacts (large binaries)
+data/
+models/artifacts/*.joblib
+models/artifacts/*.pkl
+
+# Reports are committed (they document experiment results)
+# reports/baseline_metrics.json  <-- intentionally NOT ignored
+
+# Logs
+logs/
+
+# Environment
+.env
