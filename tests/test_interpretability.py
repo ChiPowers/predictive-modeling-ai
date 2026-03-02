@@ -1,16 +1,12 @@
 """Tests for training/interpretability.py."""
 from __future__ import annotations
 
-from pathlib import Path
-
-import numpy as np
 import pytest
 
-shap = pytest.importorskip("shap", reason="shap not installed")
+pytest.importorskip("shap", reason="shap not installed")
 
-from sklearn.datasets import make_classification
-from sklearn.ensemble import GradientBoostingClassifier
-
+from sklearn.datasets import make_classification  # noqa: E402
+from sklearn.ensemble import GradientBoostingClassifier  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -58,7 +54,8 @@ def test_explain_saves_figures(tmp_path, monkeypatch):
 def test_explain_infers_feature_names_from_dataframe(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
-    import pandas as pd
+    import pandas as pd  # noqa: PLC0415
+
     from training.interpretability import explain
 
     model, X, _ = _fitted_tree_model()

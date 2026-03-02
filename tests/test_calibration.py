@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -44,7 +42,7 @@ def test_calibrate_sigmoid():
 
 def test_ece_decreases_or_stays_flat():
     """ECE after calibration should not be worse than before by a large margin."""
-    from training.calibration import calibrate, _ece
+    from training.calibration import _ece, calibrate
 
     model, X_val, y_val = _fitted_model()
     cal = calibrate(model, X_val, y_val, method="isotonic")

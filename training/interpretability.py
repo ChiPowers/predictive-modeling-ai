@@ -45,8 +45,6 @@ def explain(
     """
     import matplotlib
     matplotlib.use("Agg")  # headless — no display required
-    import matplotlib.pyplot as plt  # noqa: F401 (imported for side-effects / plt.close)
-    import shap
 
     # ── Resolve feature names ─────────────────────────────────────────────
     if feature_names is None and isinstance(X_explain, pd.DataFrame):
@@ -182,4 +180,4 @@ def _save_bar(
         if feature_names
         else [f"feature_{i}" for i in range(len(mean_abs))]
     )
-    return dict(zip(all_names, mean_abs.tolist()))
+    return dict(zip(all_names, mean_abs.tolist(), strict=False))
