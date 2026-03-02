@@ -1,0 +1,50 @@
+# Feature engineering configuration
+#
+# Groups control which feature families are built.
+# Individual bounds let you tune clipping/binning without touching code.
+
+enabled_groups:
+  - origination       # loan-level origination characteristics
+  - performance       # monthly performance history (requires performance data)
+  - macro_stub        # placeholder FRED macro features (requires fred source)
+
+# ── Clipping / outlier bounds ──────────────────────────────────────────────
+clip_bounds:
+  log_upb:            [9.0, 14.0]    # ln(UPB): ~$8k–$1.2M
+  orig_ltv:           [0.0, 105.0]   # allow >100 for underwater loans
+  orig_cltv:          [0.0, 105.0]
+  orig_dti:           [0.0, 65.0]    # Fannie Mae hard limit
+  orig_interest_rate: [0.5, 20.0]
+  credit_score:       [300.0, 850.0]
+  loan_age:           [0.0, 480.0]
+  paydown_ratio:      [0.0, 1.0]
+
+# ── Ordinal encoding maps ─────────────────────────────────────────────────
+ordinal_maps:
+  occupancy_status:  {P: 0, I: 1, S: 2}
+  loan_purpose:      {P: 0, C: 1, N: 2, R: 3}
+  channel:           {R: 0, B: 1, C: 2, T: 3}
+  property_type:     {SF: 0, CO: 1, PU: 2, MH: 3, CP: 4}
+  amortization_type: {FRM: 0, ARM: 1}
+
+# ── Required columns in feature output (validated at build time) ───────────
+required_output_columns:
+  origination:
+    - credit_score
+    - orig_ltv
+    - orig_dti
+    - orig_upb
+    - log_upb
+    - orig_interest_rate
+    - orig_loan_term
+    - is_first_time_homebuyer
+    - is_high_ltv
+    - is_high_dti
+    - is_arm
+    - is_jumbo
+    - num_units
+    - occupancy_code
+    - loan_purpose_code
+    - channel_code
+    - property_type_code
+    - num_borrowers
