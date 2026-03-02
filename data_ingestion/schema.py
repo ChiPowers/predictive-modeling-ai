@@ -27,8 +27,7 @@ def _nullable_float(coerce: bool = True) -> Column:
 
 
 def _nullable_int(coerce: bool = True) -> Column:
-    # Use Float64 so NaN values survive; int64 cannot hold NaN in numpy
-    return Column(_F, nullable=True, coerce=coerce)
+    return Column(_I, nullable=True, coerce=coerce)
 
 
 def _categorical(values: list[str], nullable: bool = True) -> Column:
@@ -119,7 +118,7 @@ PERFORMANCE_COLUMNS: list[str] = [
 ORIGINATION_SCHEMA = DataFrameSchema(
     columns={
         "credit_score": Column(
-            _F,
+            _I,
             checks=[pa.Check.in_range(300, 850)],
             nullable=True,
             coerce=True,
@@ -130,7 +129,7 @@ ORIGINATION_SCHEMA = DataFrameSchema(
         "msa": _nullable_int(),
         "mi_pct": Column(_F, checks=pa.Check.in_range(0, 55), nullable=True, coerce=True),
         "num_units": Column(
-            _F, checks=pa.Check.in_range(1, 4), nullable=True, coerce=True
+            _I, checks=pa.Check.in_range(1, 4), nullable=False, coerce=True
         ),
         "occupancy_status": _categorical(["P", "I", "S", "9"]),
         "orig_cltv": Column(_F, checks=pa.Check.in_range(0, 200), nullable=True, coerce=True),
@@ -149,7 +148,7 @@ ORIGINATION_SCHEMA = DataFrameSchema(
         "loan_sequence_number": Column(_S, nullable=False, unique=False),
         "loan_purpose": _categorical(["P", "C", "N", "R", "9"]),
         "orig_loan_term": Column(
-            _F, checks=pa.Check.in_range(1, 480), nullable=True, coerce=True
+            _I, checks=pa.Check.in_range(1, 480), nullable=False, coerce=True
         ),
         "num_borrowers": _nullable_int(),
         "seller_name": Column(_S, nullable=True, coerce=True),

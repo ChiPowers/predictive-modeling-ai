@@ -9,7 +9,7 @@ run_monitoring_job(feature_ref, feature_cur, score_ref, score_cur,
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -50,8 +50,8 @@ def run_monitoring_job(
         Dict with ``feature_drift``, ``score_drift``, and ``perf_drift`` sub-dicts.
     """
     from monitoring.drift import run_feature_drift
-    from monitoring.perf_drift import run_perf_drift
     from monitoring.score_drift import run_score_drift
+    from monitoring.perf_drift import run_perf_drift
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -105,7 +105,7 @@ def write_summary_report(results: dict[str, Any], output_dir: Path) -> Path:
     score = results.get("score_drift") or {}
     perf = results.get("perf_drift")
 
-    run_ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    run_ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     # ── overall health badge ─────────────────────────────────────────────────
     alerts: list[str] = []
