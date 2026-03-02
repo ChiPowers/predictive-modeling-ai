@@ -35,8 +35,9 @@ def test_health_ok(client: TestClient) -> None:
 
 def test_forecast_no_artifact_returns_404(client: TestClient) -> None:
     """404 when the prophet artifact does not exist yet."""
-    import models.registry as reg
     from unittest.mock import patch
+
+    import models.registry as reg
 
     with patch.object(reg, "load", side_effect=FileNotFoundError("not found")):
         resp = client.post(
@@ -57,6 +58,7 @@ def test_forecast_invalid_payload_returns_422(client: TestClient) -> None:
 def test_forecast_with_real_prophet(tmp_path: Path, client: TestClient) -> None:
     """End-to-end: train a tiny Prophet model, load it, assert 200."""
     from prophet import Prophet
+
     import models.registry as reg
 
     # Fit a minimal Prophet model
@@ -92,8 +94,8 @@ def test_forecast_with_real_prophet(tmp_path: Path, client: TestClient) -> None:
 
 def _make_sklearn_artifact() -> dict:
     """Build a tiny trained sklearn artifact for testing."""
-    from sklearn.linear_model import LogisticRegression
     from sklearn.impute import SimpleImputer
+    from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import Pipeline
 
     rng = np.random.default_rng(5)

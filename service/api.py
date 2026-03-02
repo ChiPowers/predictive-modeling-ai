@@ -15,15 +15,15 @@ POST /score
 """
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from config.settings import settings
 from utils.logging import configure_logging, log
-
 
 # ---------------------------------------------------------------------------
 # App lifecycle
@@ -99,7 +99,6 @@ async def forecast(req: ForecastRequest) -> ForecastResponse:
     The artifact must exist in ``models/artifacts/prophet.joblib`` — run
     ``pmai train --model prophet`` first.
     """
-    import pandas as pd
 
     log.info("Forecast request: source={} model={} horizon={}", req.source, req.model, req.horizon)
 

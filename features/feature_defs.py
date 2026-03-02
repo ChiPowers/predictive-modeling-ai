@@ -15,8 +15,8 @@ The pipeline in build_features.py calls them in registration order.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Callable
+from collections.abc import Callable
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd

@@ -147,8 +147,10 @@ def monitor(
         reports/monitoring/perf_drift.json   (only when label_col present)
         reports/monitoring/summary.md
     """
-    import pandas as pd
     from pathlib import Path
+
+    import pandas as pd
+
     from monitoring import run_monitoring_job
 
     log.info("Loading reference dataset from {}", reference_path)

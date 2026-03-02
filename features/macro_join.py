@@ -135,7 +135,7 @@ def join_macro_features(
     macro_index_str = macro_df.index.astype(str)
     macro_lookup: dict[str, dict[str, float]] = {
         period_str: macro_df.loc[period, :].to_dict()
-        for period_str, period in zip(macro_index_str, macro_df.index)
+        for period_str, period in zip(macro_index_str, macro_df.index, strict=False)
     }
 
     period_str_series = _date_col_to_period_str(df[date_col])

@@ -14,11 +14,11 @@ def test_build_features_missing_source_raises() -> None:
 
 def test_build_features_fannie_no_data_raises() -> None:
     """build_features raises FileNotFoundError when no Fannie origination parquets exist."""
-    from unittest.mock import patch
     from pathlib import Path
+    from unittest.mock import patch
+
     from features.engineer import build_features
 
     # Patch glob to return an empty list so no files appear to exist
-    with patch.object(Path, "glob", return_value=[]):
-        with pytest.raises(FileNotFoundError, match="origination"):
-            build_features("fannie-mae")
+    with patch.object(Path, "glob", return_value=[]), pytest.raises(FileNotFoundError, match="origination"):
+        build_features("fannie-mae")

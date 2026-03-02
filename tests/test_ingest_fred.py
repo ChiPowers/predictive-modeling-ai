@@ -1,13 +1,11 @@
 """Tests for data_ingestion/ingest_fred.py."""
 from __future__ import annotations
 
-from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # _to_monthly
@@ -85,9 +83,8 @@ def test_ingest_fred_returns_cached_parquet(tmp_path: Path) -> None:
         "output": {"raw_dir": str(raw_dir), "filename": "macro_monthly.parquet"},
     }
 
-    with patch("data_ingestion.ingest_fred._load_config", return_value=fake_cfg):
-        with patch("httpx.Client") as mock_client:
-            result = ingest_fred(overwrite=False)
+    with patch("data_ingestion.ingest_fred._load_config", return_value=fake_cfg), patch("httpx.Client") as mock_client:
+        result = ingest_fred(overwrite=False)
 
     # httpx should never have been called
     mock_client.assert_not_called()
