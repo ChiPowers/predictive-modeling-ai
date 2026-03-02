@@ -1,0 +1,62 @@
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ── Data & models ────────────────────────────────────────────────────────────
+data/raw/**
+data/processed/**
+models/artifacts/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!models/artifacts/.gitkeep
+!data/raw/fannie_mae/
+!data/raw/fannie_mae/origination/
+!data/raw/fannie_mae/origination/.gitkeep
+!data/raw/fannie_mae/performance/
+!data/raw/fannie_mae/performance/.gitkeep
+!data/processed/fannie_mae/
+!data/processed/fannie_mae/.gitkeep
+!data/README.md
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+logs/*.log
+!logs/.gitkeep
+
+# ── Notebooks ────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+
+# ── Secrets ──────────────────────────────────────────────────────────────────
+.env
+*.pem
+*.key
