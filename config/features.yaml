@@ -1,0 +1,68 @@
+# Feature pipeline configuration
+# Modify this file to enable/disable feature groups or adjust clipping bounds.
+
+# Feature groups to run (order defines execution priority within each group)
+enabled_groups:
+  - origination
+  - performance
+  - macro_stub
+
+# ── Origination feature bounds ──────────────────────────────────────────────
+fico_clip: [300, 850]    # Valid FICO range
+ltv_clip: [0, 200]       # LTV % (can exceed 100 for underwater loans)
+dti_clip: [0, 100]       # DTI %
+rate_clip: [0, 30]       # Note rate %
+upb_min: 0               # UPB floor
+loan_term_min: 0         # Loan term floor (months)
+num_units_clip: [1, 4]   # Single-family to 4-unit
+
+# ── Performance feature windows ─────────────────────────────────────────────
+# Rolling window sizes (months) used for delinquency flag features.
+# Changing this list requires adding matching @register entries in feature_defs.py.
+rolling_windows: [3]
+
+# ── Categorical encoding maps ────────────────────────────────────────────────
+loan_purpose_map:
+  P: 0   # Purchase
+  C: 1   # Cash-out refinance
+  R: 2   # Rate/term refinance
+  U: 3   # Unknown / other
+
+occupancy_type_map:
+  P: 0   # Primary residence
+  I: 1   # Investment property
+  S: 2   # Second home
+  U: 3   # Unknown / other
+
+# ── Schema: columns that must be present in the output feature matrix ────────
+required_output_cols:
+  # Keys / identifiers
+  - loan_id
+  - observation_date
+  # Origination
+  - fico_score
+  - ltv
+  - dti
+  - loan_purpose_enc
+  - occupancy_enc
+  - orig_upb
+  - orig_rate
+  - loan_term
+  - num_units
+  - fthb_flag
+  # Performance
+  - months_since_orig
+  - current_upb
+  - delinquency_status
+  - rolling_30d_dq_3m
+  - rolling_60d_dq_3m
+  - ever_30d_dq
+  - ever_60d_dq
+  - num_dq_months
+  # Macro stubs (NaN until Task 4)
+  - macro_unemployment_rate
+  - macro_10yr_treasury
+  - macro_hpi_change
+
+# ── Output path (relative to project root) ──────────────────────────────────
+output_path: data/processed/features.parquet
