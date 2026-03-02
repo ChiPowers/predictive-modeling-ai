@@ -12,14 +12,14 @@
     "best_f1": 0.9023746701846965,
     "best_precision": 0.9144385026737968,
     "best_recall": 0.890625,
-    "best_threshold": 0.48978283174007636,
+    "best_threshold": 0.4897828317400765,
     "n_samples": 424,
     "positive_rate": 0.4528301886792453
   },
   "val": {
     "auc_roc": 0.9813148788927336,
     "average_precision": 0.9805489073857669,
-    "brier_score": 0.0523385339085387,
+    "brier_score": 0.052338533908538716,
     "best_f1": 0.9219858156028369,
     "best_precision": 0.8904109589041096,
     "best_recall": 0.9558823529411765,
@@ -34,9 +34,9 @@
     "best_f1": 0.9299363057324842,
     "best_precision": 0.9358974358974359,
     "best_recall": 0.9240506329113924,
-    "best_threshold": 0.5247964853386817,
+    "best_threshold": 0.5247964853386818,
     "n_samples": 153,
     "positive_rate": 0.5163398692810458
   },
-  "artifact_path": "/Users/chivonpowers/emdash-projects/worktrees/long-lamps-follow-2eo/models/artifacts/baseline_logreg.joblib"
+  "artifact_path": "models/artifacts/baseline_logreg.joblib"
 }

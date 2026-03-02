@@ -31,7 +31,7 @@ from sklearn.metrics import (
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from models.registry import save_model
+from models.registry import save
 from training.split import split_by_time
 from utils.logging import log
 
@@ -149,7 +149,7 @@ def run(features_path: str | Path, config_path: str | Path) -> dict[str, Any]:
     }
 
     # Save model artifact
-    artifact_path = save_model(pipeline, model_name)
+    artifact_path = save(pipeline, model_name)
     metrics["artifact_path"] = str(artifact_path)
     log.info("Model saved to {}", artifact_path)
 

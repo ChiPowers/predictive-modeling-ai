@@ -1,0 +1,65 @@
+# ---------------------------------------------------------------------------
+# FRED (Federal Reserve Economic Data) — macro series configuration
+#
+# API access
+# ----------
+# Register for a free API key at https://fred.stlouisfed.org/docs/api/api_key.html
+# Set it as FRED_API_KEY in your .env file or environment.
+#
+# Without a key the ingester falls back to FRED's public CSV endpoint
+# (no registration required; aggregation is performed locally).
+# ---------------------------------------------------------------------------
+
+api:
+  base_url: "https://api.stlouisfed.org/fred/series/observations"
+  timeout_seconds: 30
+  # Earliest observation to fetch (ISO date); keeps files small
+  observation_start: "2000-01-01"
+  file_type: "json"
+
+csv_fallback:
+  base_url: "https://fred.stlouisfed.org/graph/fredgraph.csv"
+  timeout_seconds: 30
+
+output:
+  raw_dir: "data/raw/fred"
+  filename: "macro_monthly.parquet"
+
+# ---------------------------------------------------------------------------
+# Series — all are resampled to monthly before saving.
+#
+# resample_method:
+#   "mean"  — arithmetic average within each month (rates, indices)
+#   "ffill" — forward-fill from last known value (stocks / quarterly series)
+# ---------------------------------------------------------------------------
+
+series:
+  - id: FEDFUNDS
+    name: fed_funds_rate
+    description: "Effective Federal Funds Rate (%)"
+    resample_method: mean
+
+  - id: MORTGAGE30US
+    name: mortgage_rate_30y
+    description: "30-Year Fixed Rate Mortgage Average (%) — weekly, averaged to monthly"
+    resample_method: mean
+
+  - id: UNRATE
+    name: unemployment_rate
+    description: "Unemployment Rate (%)"
+    resample_method: mean
+
+  - id: CPIAUCSL
+    name: cpi_all_items
+    description: "CPI All Urban Consumers, All Items (Index 1982–84=100)"
+    resample_method: mean
+
+  - id: GDPC1
+    name: real_gdp_billions
+    description: "Real GDP, Billions of Chained 2017 Dollars (quarterly → forward-filled to monthly)"
+    resample_method: ffill
+
+  - id: CSUSHPINSA
+    name: case_shiller_hpi
+    description: "S&P/Case-Shiller U.S. National Home Price Index"
+    resample_method: mean
