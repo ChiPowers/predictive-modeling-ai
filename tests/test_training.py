@@ -2,12 +2,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 import numpy as np
 import pandas as pd
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # train_model routing
@@ -103,16 +101,18 @@ def test_build_delinquency_ts_sorted() -> None:
 
 
 def test_build_pd_pipeline_logreg() -> None:
-    from training.trainer import _build_pd_pipeline
     from sklearn.linear_model import LogisticRegression
+
+    from training.trainer import _build_pd_pipeline
 
     pipe = _build_pd_pipeline(use_rf=False)
     assert any(isinstance(s, LogisticRegression) for _, s in pipe.steps)
 
 
 def test_build_pd_pipeline_rf() -> None:
-    from training.trainer import _build_pd_pipeline
     from sklearn.ensemble import RandomForestClassifier
+
+    from training.trainer import _build_pd_pipeline
 
     pipe = _build_pd_pipeline(use_rf=True)
     assert any(isinstance(s, RandomForestClassifier) for _, s in pipe.steps)
