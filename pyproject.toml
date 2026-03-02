@@ -37,6 +37,9 @@ dependencies = [
     "pandera==0.20.3",
     # YAML config
     "pyyaml==6.0.2",
+    # Experiment tracking & model registry
+    "mlflow>=2.17",
+    "joblib==1.4.2",
 ]
 
 [project.optional-dependencies]

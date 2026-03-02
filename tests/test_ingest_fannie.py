@@ -13,6 +13,7 @@ from data_ingestion.schema import (
     PERFORMANCE_SCHEMA,
 )
 
+
 # ---------------------------------------------------------------------------
 # Schema column list tests
 # ---------------------------------------------------------------------------
@@ -122,14 +123,14 @@ def _make_performance_row(**overrides) -> dict:
 
 def test_origination_schema_validates_valid_row() -> None:
     df = pd.DataFrame([_make_origination_row()])
-    validated = ORIGINATION_SCHEMA.validate(df.replace("", float("nan")), lazy=True)
+    validated = ORIGINATION_SCHEMA.validate(df.replace("", pd.NA), lazy=True)
     assert validated is not None
     assert len(validated) == 1
 
 
 def test_performance_schema_validates_valid_row() -> None:
     df = pd.DataFrame([_make_performance_row()])
-    validated = PERFORMANCE_SCHEMA.validate(df.replace("", float("nan")), lazy=True)
+    validated = PERFORMANCE_SCHEMA.validate(df.replace("", pd.NA), lazy=True)
     assert validated is not None
     assert len(validated) == 1
 
@@ -138,7 +139,7 @@ def test_origination_schema_rejects_bad_credit_score() -> None:
     import pandera.errors as pe
 
     df = pd.DataFrame([_make_origination_row(credit_score="100")])  # below 300
-    df = df.replace("", float("nan"))
+    df = df.replace("", pd.NA)
     with pytest.raises((pe.SchemaError, pe.SchemaErrors)):
         ORIGINATION_SCHEMA.validate(df, lazy=False)
 
@@ -146,7 +147,7 @@ def test_origination_schema_rejects_bad_credit_score() -> None:
 def test_origination_schema_allows_null_credit_score() -> None:
     """Nullable credit score (e.g. 9999 missing marker → NaN) must pass."""
     df = pd.DataFrame([_make_origination_row(credit_score="")])
-    df = df.replace("", float("nan"))
+    df = df.replace("", pd.NA)
     validated = ORIGINATION_SCHEMA.validate(df, lazy=True)
     assert pd.isna(validated["credit_score"].iloc[0])
 
@@ -192,7 +193,6 @@ def test_normalize_blanks() -> None:
 def test_ingest_origination_no_files(tmp_path, monkeypatch) -> None:
     """ingest_origination returns empty list when directory has no matching files."""
     import yaml
-
     from data_ingestion import ingest_fannie
 
     cfg = {
@@ -223,7 +223,6 @@ def test_ingest_origination_no_files(tmp_path, monkeypatch) -> None:
 def test_ingest_origination_with_synthetic_file(tmp_path, monkeypatch) -> None:
     """End-to-end test: write a synthetic pipe-delimited file, ingest it."""
     import yaml
-
     from data_ingestion import ingest_fannie
 
     orig_dir = tmp_path / "orig"

@@ -37,6 +37,17 @@ class Settings(BaseSettings):
         description="FRED API key — https://fred.stlouisfed.org/docs/api/api_key.html",
     )
 
+    # ── MLflow ─────────────────────────────────────────────────────────────
+    mlflow_tracking_uri: str = Field(default="mlruns", description="MLflow tracking server URI")
+    mlflow_experiment_name: str = Field(
+        default="predictive-modeling-ai",
+        description="Default experiment name for training runs",
+    )
+    mlflow_registered_model_name: str = Field(
+        default="pmai-forecast",
+        description="Model Registry name for the trained forecasting model",
+    )
+
     # ── Service ────────────────────────────────────────────────────────────
     api_host: str = Field(default="0.0.0.0")
     api_port: int = Field(default=8000)

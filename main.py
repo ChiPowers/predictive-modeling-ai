@@ -3,9 +3,9 @@
 Usage:
     python -m main ingest   --source <name>
     python -m main features --source <name>
-    python -m main train    --model  <name>
+    python -m main train    --model  <name> [--run-name <name>] [--experiment-name <name>]
     python -m main serve
-    python -m main pipeline --source <name> --model <name>
+    python -m main pipeline --source <name> --model <name> [--run-name <name>] [--experiment-name <name>]
 
 Or via the installed script:
     pmai ingest --source <name>
@@ -69,13 +69,17 @@ def features(
 
 @app.command()
 def train(
-    model: str = typer.Option("prophet", help="Model identifier (prophet | sklearn-rf | ...)"),
+    model: str = typer.Option("prophet", help="Model identifier (prophet | sklearn-logreg | sklearn-rf)"),
+    run_name: str | None = typer.Option(None, "--run-name", help="MLflow run label"),
+    experiment_name: str | None = typer.Option(
+        None, "--experiment-name", help="MLflow experiment name (overrides settings)"
+    ),
 ) -> None:
-    """Train a forecasting model."""
+    """Train a forecasting model and log the run to MLflow."""
     from training.trainer import train_model
 
     log.info("Training model={}", model)
-    train_model(model)
+    train_model(model, run_name=run_name, experiment_name=experiment_name)
     log.info("Training complete")
 
 
@@ -97,6 +101,10 @@ def serve() -> None:
 def pipeline(
     source: str = typer.Option(..., help="Dataset source key"),
     model: str = typer.Option("prophet", help="Model identifier"),
+    run_name: str | None = typer.Option(None, "--run-name", help="MLflow run label"),
+    experiment_name: str | None = typer.Option(
+        None, "--experiment-name", help="MLflow experiment name (overrides settings)"
+    ),
 ) -> None:
     """Run the full ingest → features → train pipeline."""
     from data_ingestion.loader import load
@@ -106,7 +114,7 @@ def pipeline(
     log.info("Running full pipeline: source={} model={}", source, model)
     load(source)
     build_features(source)
-    train_model(model)
+    train_model(model, run_name=run_name, experiment_name=experiment_name)
     log.info("Pipeline complete")
 
 

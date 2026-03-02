@@ -1,0 +1,17 @@
+# MLflow configuration
+# Override any value via the matching environment variable (e.g. MLFLOW_TRACKING_URI).
+
+# Where MLflow stores run metadata and params.
+# Use "mlruns" for a local filesystem store.
+# For a remote server set e.g. "http://localhost:5000".
+tracking_uri: "mlruns"
+
+# Root directory for logged artifacts (models, plots, etc.).
+# Relative paths are resolved from the project root.
+artifact_location: "mlartifacts"
+
+# Experiment that runs are grouped under when no --experiment-name is passed.
+default_experiment: "predictive-modeling-ai"
+
+# Name under which the model is registered in the MLflow Model Registry.
+registered_model_name: "pmai-forecast"

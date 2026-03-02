@@ -8,13 +8,15 @@ Ingest public datasets, engineer time-series features, train forecasting models,
 
 ```
 .
-├── config/             # Pydantic settings (env-driven)
+├── config/             # Pydantic settings (env-driven) + mlflow.yaml
 ├── data/
 │   ├── raw/            # Ingested, unmodified datasets (git-ignored)
 │   └── processed/      # Feature-engineered outputs (git-ignored)
 ├── data_ingestion/     # Dataset loaders and source adapters
 ├── features/           # Feature-engineering pipeline
 ├── logs/               # Rotating application logs (git-ignored)
+├── mlartifacts/        # MLflow artifact store (git-ignored)
+├── mlruns/             # MLflow tracking store (git-ignored)
 ├── models/
 │   └── artifacts/      # Serialised model files (git-ignored)
 ├── monitoring/         # Prediction-quality and drift metrics
@@ -77,6 +79,76 @@ All settings are read from environment variables or a `.env` file in the project
 | `FORECAST_HORIZON` | `30` | Periods to forecast |
 | `API_HOST` | `0.0.0.0` | API bind address |
 | `API_PORT` | `8000` | API port |
+| `MLFLOW_TRACKING_URI` | `mlruns` | MLflow tracking server URI |
+| `MLFLOW_EXPERIMENT_NAME` | `predictive-modeling-ai` | Default experiment name |
+| `MLFLOW_REGISTERED_MODEL_NAME` | `pmai-forecast` | Model Registry entry name |
+
+---
+
+## How to run MLflow locally
+
+### 1 — Train a model (creates a run automatically)
+
+```bash
+# Basic — uses defaults from config/mlflow.yaml / settings
+python -m main train --model prophet
+
+# With an explicit run name and experiment
+python -m main train --model sklearn-logreg \
+    --run-name "baseline-2026-03-02" \
+    --experiment-name "my-experiment"
+
+# Full pipeline
+python -m main pipeline \
+    --source fannie-mae \
+    --model sklearn-rf \
+    --run-name "pipeline-run-1"
+```
+
+Each run logs:
+
+| What | Where in MLflow |
+|---|---|
+| `model`, `random_seed`, `test_split`, `forecast_horizon` | **Parameters** |
+| `mae` (Prophet) or `auc` (sklearn) | **Metrics** |
+| Fitted estimator | **Artifacts → model/** |
+| Registered model version | **Model Registry → pmai-forecast** |
+
+### 2 — Launch the MLflow UI
+
+```bash
+mlflow ui --host 127.0.0.1 --port 5000
+```
+
+Then open <http://127.0.0.1:5000> in your browser.
+
+The tracking store is stored locally in `mlruns/` and the artifact store in `mlartifacts/`. Both are git-ignored.
+
+### 3 — List experiments and runs from the CLI
+
+```bash
+mlflow experiments list
+mlflow runs list --experiment-name predictive-modeling-ai
+mlflow artifacts download --run-id <RUN_ID> --dst-path /tmp/my-artifacts
+```
+
+### 4 — Load a registered model version for inference
+
+```python
+import mlflow.sklearn
+
+model = mlflow.sklearn.load_model("models:/pmai-forecast/latest")
+predictions = model.predict(X_new)
+```
+
+### 5 — Use a remote tracking server
+
+```bash
+export MLFLOW_TRACKING_URI=http://mlflow.internal:5000
+python -m main train --model sklearn-logreg --run-name "remote-run"
+```
+
+Or set `MLFLOW_TRACKING_URI` in `.env`.
 
 ---
 
@@ -206,6 +278,10 @@ features        →  data/processed/
      │
      ▼
 training        →  models/artifacts/
+     │              └── MLflow (mlruns/ + mlartifacts/)
+     │                   ├── params / metrics
+     │                   ├── model artifact
+     │                   └── Model Registry → pmai-forecast
      │
      ├──► monitoring  (metrics, drift)
      │
@@ -269,25 +345,6 @@ curl -s -X POST http://localhost:8000/score \
   }' | python3 -m json.tool
 ```
 
-**Response**
-
-```json
-{
-  "pd": 0.312,
-  "decision": "current",
-  "top_factors": [
-    {"name": "original_dti",          "value":  0.18},
-    {"name": "original_ltv",          "value":  0.14},
-    {"name": "credit_score",          "value": -0.11},
-    {"name": "original_interest_rate","value":  0.07},
-    {"name": "num_borrowers",         "value": -0.04}
-  ]
-}
-```
-
-`top_factors` values are SHAP values (positive = increases default risk).
-`decision` is `"default"` when `pd >= threshold`, otherwise `"current"`.
-
 ---
 
 ### POST /batch_score
@@ -297,63 +354,7 @@ Score multiple records in a single request.
 ```bash
 curl -s -X POST http://localhost:8000/batch_score \
   -H "Content-Type: application/json" \
-  -d '{
-    "records": [
-      {
-        "features": {
-          "credit_score": 780,
-          "original_ltv": 70.0,
-          "original_dti": 28.0,
-          "original_interest_rate": 5.875,
-          "original_loan_amount": 250000,
-          "loan_purpose": "P",
-          "property_type": "SF",
-          "num_borrowers": 2
-        },
-        "threshold": 0.5
-      },
-      {
-        "features": {
-          "credit_score": 580,
-          "original_ltv": 97.0,
-          "original_dti": 50.0,
-          "original_interest_rate": 8.0,
-          "original_loan_amount": 510000,
-          "loan_purpose": "C",
-          "property_type": "CO",
-          "num_borrowers": 1
-        },
-        "threshold": 0.4
-      }
-    ]
-  }' | python3 -m json.tool
-```
-
-**Response**
-
-```json
-{
-  "results": [
-    {
-      "pd": 0.04,
-      "decision": "current",
-      "top_factors": [
-        {"name": "credit_score",  "value": -0.22},
-        {"name": "original_ltv", "value": -0.09}
-      ]
-    },
-    {
-      "pd": 0.71,
-      "decision": "default",
-      "top_factors": [
-        {"name": "original_dti",  "value":  0.31},
-        {"name": "original_ltv",  "value":  0.25},
-        {"name": "credit_score",  "value": -0.18}
-      ]
-    }
-  ],
-  "count": 2
-}
+  -d '{"records": [...]}' | python3 -m json.tool
 ```
 
 ---
