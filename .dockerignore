@@ -1,0 +1,57 @@
+# ── Version control ───────────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ── Python bytecode & caches ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Tooling caches ────────────────────────────────────────────────────────────
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Tests (not needed in the image) ──────────────────────────────────────────
+tests/
+
+# ── Data (mount at runtime via volumes) ──────────────────────────────────────
+data/raw/*
+data/processed/*
+!data/raw/**/.gitkeep
+!data/processed/**/.gitkeep
+
+# ── Model artifacts (mount at runtime via volumes) ────────────────────────────
+models/artifacts/*
+!models/artifacts/.gitkeep
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── IDE & OS ──────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── Secrets ───────────────────────────────────────────────────────────────────
+*.pem
+*.key

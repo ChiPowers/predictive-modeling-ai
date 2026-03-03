@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# Fannie Mae Single-Family Loan Performance Data — path configuration
+#
+# Files must be manually downloaded from:
+#   https://capitalmarkets.fanniemae.com/credit-risk-transfer/
+#           single-family-credit-risk-transfer/
+#           fannie-mae-single-family-loan-performance-data
+#
+# After agreeing to the data licence, place downloaded .txt files here:
+# ---------------------------------------------------------------------------
+
+fannie_mae:
+  # Directory containing raw Acquisition_YYYYQ?.txt files
+  origination_dir: data/raw/fannie_mae/origination
+
+  # Directory containing raw Performance_YYYYQ?.txt files
+  performance_dir: data/raw/fannie_mae/performance
+
+  # Output directory for validated parquet files
+  processed_dir: data/processed/fannie_mae
+
+  # File naming conventions (regex patterns)
+  origination_pattern: "Acquisition_*.txt"
+  performance_pattern: "Performance_*.txt"
+
+  # Read options
+  delimiter: "|"
+  encoding: "latin-1"   # Fannie Mae files use latin-1, not utf-8
+
+  # Chunk size for performance files (rows per chunk, 0 = no chunking)
+  # Performance files can exceed several GB — tune based on available RAM
+  chunk_size: 500_000
+
+  # Quarters to ingest (empty list = ingest all found files)
+  # Format: YYYYQ?  e.g. ["2020Q1", "2020Q2", "2023Q4"]
+  quarters: []
