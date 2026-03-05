@@ -157,6 +157,16 @@ def _merge_perf_summary(orig: pd.DataFrame, perf: pd.DataFrame) -> None:
     if "loan_sequence_number" not in perf.columns:
         return
 
+    perf = perf.copy()
+    if "loan_age" in perf.columns:
+        perf["loan_age"] = pd.to_numeric(perf["loan_age"], errors="coerce")
+    if "current_actual_upb" in perf.columns:
+        perf["current_actual_upb"] = pd.to_numeric(perf["current_actual_upb"], errors="coerce")
+    if "current_delinquency_status" in perf.columns:
+        perf["current_delinquency_status"] = pd.to_numeric(
+            perf["current_delinquency_status"], errors="coerce"
+        )
+
     agg_dict: dict[str, tuple] = {}
     if "loan_age" in perf.columns:
         agg_dict["max_loan_age"] = ("loan_age", "max")
@@ -164,9 +174,7 @@ def _merge_perf_summary(orig: pd.DataFrame, perf: pd.DataFrame) -> None:
         agg_dict["latest_upb"] = ("current_actual_upb", "last")
     if "current_delinquency_status" in perf.columns:
         # Shift by 1 to prevent look-ahead leakage
-        status_numeric = pd.to_numeric(perf["current_delinquency_status"], errors="coerce")
-        perf = perf.copy()
-        perf["_dpd"] = status_numeric
+        perf["_dpd"] = perf["current_delinquency_status"]
         agg_dict["max_dpd"] = ("_dpd", "max")
 
     if not agg_dict:

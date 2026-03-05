@@ -262,3 +262,92 @@ def test_ingest_origination_with_synthetic_file(tmp_path, monkeypatch) -> None:
     result_df = pd.read_parquet(written[0])
     assert len(result_df) == 1
     assert "loan_sequence_number" in result_df.columns
+
+
+def test_ingest_all_falls_back_to_combined_file(tmp_path, monkeypatch) -> None:
+    """When classic files are absent, combined tape should be split automatically."""
+    import yaml
+    from data_ingestion import ingest_fannie
+
+    orig_dir = tmp_path / "orig"
+    perf_dir = tmp_path / "perf"
+    combined_dir = tmp_path / "combined"
+    processed_dir = tmp_path / "processed"
+    orig_dir.mkdir(parents=True)
+    perf_dir.mkdir(parents=True)
+    combined_dir.mkdir(parents=True)
+
+    cfg = {
+        "fannie_mae": {
+            "origination_dir": str(orig_dir),
+            "performance_dir": str(perf_dir),
+            "combined_dir": str(combined_dir),
+            "processed_dir": str(processed_dir),
+            "origination_pattern": "Acquisition_*.txt",
+            "performance_pattern": "Performance_*.txt",
+            "combined_pattern": "*.csv",
+            "delimiter": "|",
+            "encoding": "latin-1",
+            "chunk_size": 500_000,
+            "quarters": [],
+        }
+    }
+
+    # Synthetic combined rows (110 cols, leading/trailing blank from delimiters)
+    def _combined_row(month: str, loan_age: str, upb: str) -> str:
+        vals = [""] * 110
+        vals[1] = "L00001"
+        vals[2] = month
+        vals[3] = "C"
+        vals[4] = "Seller A"
+        vals[5] = "Servicer A"
+        vals[7] = "6.5"
+        vals[8] = "6.5"
+        vals[9] = "300000"
+        vals[11] = upb
+        vals[12] = "360"
+        vals[13] = "012025"
+        vals[15] = loan_age
+        vals[16] = "359"
+        vals[18] = "012055"
+        vals[19] = "80"
+        vals[20] = "80"
+        vals[21] = "2"
+        vals[22] = "35"
+        vals[23] = "740"
+        vals[25] = "N"
+        vals[26] = "P"
+        vals[27] = "SF"
+        vals[28] = "1"
+        vals[29] = "P"
+        vals[30] = "CO"
+        vals[31] = "80014"
+        vals[32] = "19740"
+        vals[33] = "0"
+        vals[34] = "FRM"
+        vals[35] = "N"
+        vals[36] = "N"
+        vals[39] = "0"
+        vals[41] = "N"
+        return "|".join(vals)
+
+    combined_file = combined_dir / "2025Q1.csv"
+    combined_file.write_text(
+        _combined_row("012025", "0", "300000") + "\n" + _combined_row("022025", "1", "299500") + "\n",
+        encoding="latin-1",
+    )
+
+    cfg_path = tmp_path / "data_paths.yaml"
+    cfg_path.write_text(yaml.dump(cfg))
+    monkeypatch.setattr(ingest_fannie, "_CONFIG_PATH", cfg_path)
+
+    out = ingest_fannie.ingest_all(validate=False)
+    assert len(out["origination"]) == 1
+    assert len(out["performance"]) == 1
+
+    orig_df = pd.read_parquet(out["origination"][0])
+    perf_df = pd.read_parquet(out["performance"][0])
+    assert len(orig_df) == 1
+    assert len(perf_df) == 2
+    assert set(["loan_sequence_number", "orig_upb", "credit_score"]).issubset(orig_df.columns)
+    assert set(["loan_sequence_number", "monthly_reporting_period", "loan_age"]).issubset(perf_df.columns)

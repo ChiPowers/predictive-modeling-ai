@@ -30,6 +30,23 @@ The agent cannot do this on your behalf.
    data/raw/fannie_mae/performance/   ← Performance_*.txt files
    ```
 
+### Combined-file variant (single CSV per quarter)
+
+Some Fannie exports now arrive as one pipe-delimited file per quarter that mixes
+acquisition and performance fields (for example `2025Q1.csv`).
+
+Place those files in:
+
+```
+data/raw/fannie_mae/combined/   ← *.csv files
+```
+
+`python -m main ingest --source fannie-mae` now auto-detects this layout and
+splits it into:
+
+- `data/processed/fannie_mae/origination/origination_<quarter>.parquet`
+- `data/processed/fannie_mae/performance/performance_<quarter>.parquet`
+
 ### File format
 
 | Property | Value |

@@ -163,25 +163,32 @@ def _delinquency_bucket(df: pd.DataFrame) -> pd.Series:
 @register("performance", "paydown_ratio",
           description="(orig_upb - current_actual_upb) / orig_upb — proportion paid down")
 def _paydown_ratio(df: pd.DataFrame) -> pd.Series:
-    orig = pd.to_numeric(df.get("orig_upb"), errors="coerce")
-    current = pd.to_numeric(df.get("current_actual_upb"), errors="coerce")
-    ratio = ((orig - current) / orig.clip(lower=1)).clip(0, 1)
+    orig_raw = df.get("orig_upb", pd.Series(pd.NA, index=df.index))
+    current_raw = df.get("current_actual_upb", pd.Series(pd.NA, index=df.index))
+    orig = pd.to_numeric(orig_raw, errors="coerce")
+    current = pd.to_numeric(current_raw, errors="coerce")
+    denom = orig.clip(lower=1)
+    ratio = ((orig - current) / denom).clip(0, 1)
     return ratio.rename("paydown_ratio")
 
 
 @register("performance", "rate_spread",
           description="current_interest_rate - orig_interest_rate (positive = rate rose)")
 def _rate_spread(df: pd.DataFrame) -> pd.Series:
-    cur_rate = pd.to_numeric(df.get("current_interest_rate"), errors="coerce")
-    orig_rate = pd.to_numeric(df.get("orig_interest_rate"), errors="coerce")
+    cur_raw = df.get("current_interest_rate", pd.Series(pd.NA, index=df.index))
+    orig_raw = df.get("orig_interest_rate", pd.Series(pd.NA, index=df.index))
+    cur_rate = pd.to_numeric(cur_raw, errors="coerce")
+    orig_rate = pd.to_numeric(orig_raw, errors="coerce")
     return (cur_rate - orig_rate).rename("rate_spread")
 
 
 @register("performance", "term_remaining_ratio",
           description="remaining_months / orig_loan_term — how far through the loan")
 def _term_remaining_ratio(df: pd.DataFrame) -> pd.Series:
-    remaining = pd.to_numeric(df.get("remaining_months_to_legal_maturity"), errors="coerce")
-    orig_term = pd.to_numeric(df.get("orig_loan_term"), errors="coerce")
+    remaining_raw = df.get("remaining_months_to_legal_maturity", pd.Series(pd.NA, index=df.index))
+    orig_term_raw = df.get("orig_loan_term", pd.Series(pd.NA, index=df.index))
+    remaining = pd.to_numeric(remaining_raw, errors="coerce")
+    orig_term = pd.to_numeric(orig_term_raw, errors="coerce")
     return (remaining / orig_term.clip(lower=1)).clip(0, 1).rename("term_remaining_ratio")
 
 

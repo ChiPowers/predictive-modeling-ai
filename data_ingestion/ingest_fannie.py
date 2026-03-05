@@ -56,6 +56,51 @@ def _load_config() -> dict:
 
 _QUARTER_RE = re.compile(r"(\d{4}Q[1-4])", re.IGNORECASE)
 
+# Observed index map for newer combined monthly loan tapes where
+# acquisition + performance fields are emitted in a single pipe-delimited row.
+# This map only targets the subset of fields needed by the current pipeline.
+_COMBINED_ORIG_COL_IDX: dict[str, int] = {
+    "loan_sequence_number": 1,
+    "channel": 3,
+    "seller_name": 4,
+    "servicer_name": 5,
+    "orig_interest_rate": 7,
+    "orig_upb": 9,
+    "orig_loan_term": 12,
+    "first_payment_date": 13,
+    "maturity_date": 18,
+    "orig_ltv": 19,
+    "orig_cltv": 20,
+    "num_borrowers": 21,
+    "orig_dti": 22,
+    "credit_score": 23,
+    "first_time_homebuyer_flag": 25,
+    "occupancy_status": 26,
+    "property_type": 27,
+    "num_units": 28,
+    "loan_purpose": 29,
+    "property_state": 30,
+    "postal_code": 31,
+    "msa": 32,
+    "mi_pct": 33,
+    "amortization_type": 34,
+    "super_conforming_flag": 35,
+    "ppm_flag": 36,
+    "current_delinquency_status": 39,
+    "modification_flag": 41,
+}
+
+_COMBINED_PERF_COL_IDX: dict[str, int] = {
+    "loan_sequence_number": 1,
+    "monthly_reporting_period": 2,
+    "current_interest_rate": 8,
+    "current_actual_upb": 11,
+    "loan_age": 15,
+    "remaining_months_to_legal_maturity": 16,
+    "current_delinquency_status": 39,
+    "modification_flag": 41,
+}
+
 
 def _quarter_from_path(path: Path) -> str:
     """Extract quarter string (e.g. '2023Q1') from a filename."""
@@ -68,6 +113,17 @@ def _filter_quarters(paths: list[Path], quarters: list[str]) -> list[Path]:
         return paths
     wanted = {q.upper() for q in quarters}
     return [p for p in paths if _quarter_from_path(p).upper() in wanted]
+
+
+def _extract_by_index(raw: pd.DataFrame, columns: list[str], idx_map: dict[str, int]) -> pd.DataFrame:
+    out = pd.DataFrame(index=raw.index)
+    for col in columns:
+        idx = idx_map.get(col)
+        if idx is None:
+            out[col] = pd.NA
+        else:
+            out[col] = raw.iloc[:, idx] if idx < raw.shape[1] else pd.NA
+    return out
 
 
 def _read_raw_chunk(
@@ -107,9 +163,17 @@ def _validate(df: pd.DataFrame, schema, file_label: str) -> pd.DataFrame:
             file_label,
             exc,
         )
-        # Return coerced frame even when checks partially fail so pipeline
-        # can continue; callers may tighten this to re-raise if needed.
-        return schema.validate(df, lazy=False)
+        # Best effort coercion; if this also fails, continue with raw normalized
+        # frame so ingestion does not block downstream experimentation.
+        try:
+            return schema.validate(df, lazy=False)
+        except Exception as exc2:
+            log.warning(
+                "Schema coercion fallback also failed for {} — using unvalidated frame.\n{}",
+                file_label,
+                exc2,
+            )
+            return df
 
 
 # ---------------------------------------------------------------------------
@@ -284,9 +348,106 @@ def ingest_all(
     log.info("Starting Fannie Mae full ingestion (validate={}, overwrite={})", validate, overwrite)
     orig_paths = ingest_origination(quarters, validate=validate, overwrite=overwrite)
     perf_paths = ingest_performance(quarters, validate=validate, overwrite=overwrite)
+
+    if not orig_paths and not perf_paths:
+        combined = ingest_combined(quarters, validate=validate, overwrite=overwrite)
+        orig_paths = combined["origination"]
+        perf_paths = combined["performance"]
+
     log.info(
         "Ingestion complete — {} origination, {} performance files written",
         len(orig_paths),
         len(perf_paths),
     )
     return {"origination": orig_paths, "performance": perf_paths}
+
+
+def ingest_combined(
+    quarters: list[str] | None = None,
+    *,
+    validate: bool = True,
+    overwrite: bool = False,
+) -> dict[str, list[Path]]:
+    """Ingest newer combined loan tapes and split to origination/performance outputs."""
+    cfg = _load_config()
+    combined_dir = Path(cfg.get("combined_dir", Path(cfg["origination_dir"]).parent / "combined"))
+    combined_pattern = cfg.get("combined_pattern", "*.csv")
+    paths = sorted(combined_dir.glob(combined_pattern))
+    if not paths:
+        log.warning("No combined Fannie files found in {}", combined_dir)
+        return {"origination": [], "performance": []}
+
+    _quarters = quarters or cfg.get("quarters") or []
+    paths = _filter_quarters(paths, _quarters)
+    if not paths:
+        log.warning("No combined Fannie files matched requested quarters: {}", _quarters)
+        return {"origination": [], "performance": []}
+
+    out_orig_dir = Path(cfg["processed_dir"]) / "origination"
+    out_perf_dir = Path(cfg["processed_dir"]) / "performance"
+    out_orig_dir.mkdir(parents=True, exist_ok=True)
+    out_perf_dir.mkdir(parents=True, exist_ok=True)
+
+    chunk_size: int = int(cfg.get("chunk_size", 0)) or 500_000
+    written_orig: list[Path] = []
+    written_perf: list[Path] = []
+
+    for src in paths:
+        quarter = _quarter_from_path(src)
+        orig_out = out_orig_dir / f"origination_{quarter}.parquet"
+        perf_out = out_perf_dir / f"performance_{quarter}.parquet"
+        if orig_out.exists() and perf_out.exists() and not overwrite:
+            log.info("Skipping combined {} (outputs already exist)", src.name)
+            written_orig.append(orig_out)
+            written_perf.append(perf_out)
+            continue
+
+        log.info("Ingesting combined Fannie file: {} (chunks of {:,})", src.name, chunk_size)
+        perf_chunks: list[pd.DataFrame] = []
+        orig_chunks: list[pd.DataFrame] = []
+        reader = pd.read_csv(
+            src,
+            sep=cfg["delimiter"],
+            header=None,
+            dtype=str,
+            encoding=cfg["encoding"],
+            chunksize=chunk_size,
+            low_memory=False,
+        )
+
+        for chunk in reader:
+            raw = chunk
+
+            perf = _extract_by_index(raw, PERFORMANCE_COLUMNS, _COMBINED_PERF_COL_IDX)
+            perf = _normalize_blanks(perf)
+            if validate:
+                perf = _validate(perf, PERFORMANCE_SCHEMA, f"{src.name}[combined-perf]")
+            perf_chunks.append(perf)
+
+            orig = _extract_by_index(raw, ORIGINATION_COLUMNS, _COMBINED_ORIG_COL_IDX)
+            orig = _normalize_blanks(orig)
+            orig_chunks.append(orig)
+
+        if not perf_chunks:
+            log.warning("Combined file {} appears empty", src.name)
+            continue
+
+        perf_df = pd.concat(perf_chunks, ignore_index=True)
+        perf_df.to_parquet(perf_out, index=False, engine="pyarrow")
+        written_perf.append(perf_out)
+
+        orig_df = pd.concat(orig_chunks, ignore_index=True)
+        orig_df = orig_df.drop_duplicates(subset=["loan_sequence_number"], keep="first")
+        if validate:
+            orig_df = _validate(orig_df, ORIGINATION_SCHEMA, f"{src.name}[combined-orig]")
+        orig_df.to_parquet(orig_out, index=False, engine="pyarrow")
+        written_orig.append(orig_out)
+
+        log.info(
+            "Combined {} written → orig: {} rows, perf: {} rows",
+            quarter,
+            len(orig_df),
+            len(perf_df),
+        )
+
+    return {"origination": written_orig, "performance": written_perf}

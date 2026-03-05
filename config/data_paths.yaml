@@ -16,12 +16,17 @@ fannie_mae:
   # Directory containing raw Performance_YYYYQ?.txt files
   performance_dir: data/raw/fannie_mae/performance
 
+  # Optional directory for newer combined monthly loan tapes
+  # (single file containing both acquisition + performance fields)
+  combined_dir: data/raw/fannie_mae/combined
+
   # Output directory for validated parquet files
   processed_dir: data/processed/fannie_mae
 
   # File naming conventions (regex patterns)
   origination_pattern: "Acquisition_*.txt"
   performance_pattern: "Performance_*.txt"
+  combined_pattern: "*.csv"
 
   # Read options
   delimiter: "|"
