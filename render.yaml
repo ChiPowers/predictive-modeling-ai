@@ -2,7 +2,6 @@ services:
   - type: web
     name: pmai-web
     env: docker
-    plan: starter
     region: oregon
     dockerfilePath: ./Dockerfile
     autoDeploy: true
@@ -12,25 +11,5 @@ services:
         value: INFO
       - key: LOG_SERIALIZE
         value: "true"
-      - key: DATA_RAW_DIR
-        value: /app/data/raw
-      - key: DATA_PROCESSED_DIR
-        value: /app/data/processed
-      - key: MODELS_DIR
-        value: /app/data/models/artifacts
-      - key: LOGS_DIR
-        value: /app/data/logs
-      - key: MLFLOW_TRACKING_URI
-        value: /app/data/mlruns
       - key: AUTH_ENABLED
-        value: "true"
-      - key: AUTH_SECRET
-        generateValue: true
-      - key: AUTH_TOKEN_TTL_MINUTES
-        value: "720"
-      - key: MODEL_ARTIFACT_DIR
-        value: /app/data/models/artifacts
-    disk:
-      name: pmai-state
-      mountPath: /app/data
-      sizeGB: 10
+        value: "false"

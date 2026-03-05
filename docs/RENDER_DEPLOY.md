@@ -19,6 +19,17 @@ service to Blueprint-managed config from your repo file.
    - `/health`
    - `/ready`
 
+## Lowest-cost profile (portfolio/demo)
+
+The current `render.yaml` is configured for lowest cost:
+
+- no persistent disk
+- `AUTH_ENABLED=false` (demo mode)
+- Docker deploy + `/health` check
+
+Tradeoff: data, trained models, and user state are ephemeral and may reset on
+restart/redeploy.
+
 ## Existing service already on Render
 
 If your current service was created manually, do one of these:
@@ -33,11 +44,7 @@ If neither is done, changing `render.yaml` in GitHub will not change the running
 - Docker deploy using `Dockerfile`
 - Dynamic Render port via container startup command already in Dockerfile
 - Health check path: `/health`
-- Persistent disk mounted at `/app/data` for:
-  - auth SQLite DB (`/app/data/auth/users.sqlite3`)
-  - raw/processed datasets
-  - model artifacts
-  - mlflow local runs
+- Demo-first auth setting (`AUTH_ENABLED=false`)
 
 ## Demo vs user-login modes
 
@@ -47,7 +54,7 @@ You can run two Render services from this same codebase:
    - `AUTH_ENABLED=false`
 2. User mode service:
    - `AUTH_ENABLED=true`
-   - `AUTH_SECRET=<generated-secret>`
+   - set `AUTH_SECRET=<generated-secret>`
+   - add persistent disk if you want user/model state to survive restarts
 
 Simplest setup: duplicate the service in Render and change only those env vars.
-
