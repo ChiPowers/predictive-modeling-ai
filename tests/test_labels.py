@@ -8,10 +8,8 @@ failures pinpoint the exact broken invariant.
 """
 
 import pandas as pd
-import pytest
 
 from features.labels import build_labels
-
 
 # ---------------------------------------------------------------------------
 # Helpers

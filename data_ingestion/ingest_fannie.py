@@ -24,8 +24,8 @@ Usage (programmatic)
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
 from pathlib import Path
+from typing import Iterator
 
 import pandas as pd
 import yaml
@@ -91,10 +91,8 @@ def _read_raw_chunk(
 
 
 def _normalize_blanks(df: pd.DataFrame) -> pd.DataFrame:
-    """Replace empty strings and whitespace-only cells with NaN (float-compatible)."""
-    # Use np.nan rather than pd.NA so pandera float64 coercion works correctly
-    import numpy as np
-    return df.replace(r"^\s*$", np.nan, regex=True)
+    """Replace empty strings and whitespace-only cells with NaN."""
+    return df.replace(r"^\s*$", pd.NA, regex=True)
 
 
 def _validate(df: pd.DataFrame, schema, file_label: str) -> pd.DataFrame:

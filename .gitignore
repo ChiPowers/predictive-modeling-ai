@@ -39,9 +39,17 @@ models/artifacts/**
 !data/processed/fannie_mae/.gitkeep
 !data/README.md
 
+# ── MLflow stores ────────────────────────────────────────────────────────────
+mlruns/
+mlartifacts/
+
 # ── Logs ─────────────────────────────────────────────────────────────────────
 logs/*.log
 !logs/.gitkeep
+
+# ── Reports ──────────────────────────────────────────────────────────────────
+reports/figures/*
+!reports/figures/.gitkeep
 
 # ── Notebooks ────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/

@@ -1,0 +1,59 @@
+{
+  "dataset": {
+    "n": 5000,
+    "mean_pd": 0.118208,
+    "lgd": 0.6,
+    "has_actual_labels": true
+  },
+  "policies": [
+    {
+      "policy_name": "strict",
+      "n_total": 5000,
+      "n_approved": 3269,
+      "n_review": 250,
+      "n_declined": 1481,
+      "approval_rate": 0.6538,
+      "review_rate": 0.05,
+      "decline_rate": 0.2962,
+      "mean_pd_approved": 0.06037109860151162,
+      "expected_loss_rate": 0.02368237455940098,
+      "actual_default_rate_approved": 0.05842765371673295
+    },
+    {
+      "policy_name": "balanced",
+      "n_total": 5000,
+      "n_approved": 3968,
+      "n_review": 500,
+      "n_declined": 532,
+      "approval_rate": 0.7936,
+      "review_rate": 0.1,
+      "decline_rate": 0.1064,
+      "mean_pd_approved": 0.07755592461273945,
+      "expected_loss_rate": 0.036929029063602015,
+      "actual_default_rate_approved": 0.07862903225806452
+    },
+    {
+      "policy_name": "lenient",
+      "n_total": 5000,
+      "n_approved": 4164,
+      "n_review": 750,
+      "n_declined": 86,
+      "approval_rate": 0.8328,
+      "review_rate": 0.15,
+      "decline_rate": 0.0172,
+      "mean_pd_approved": 0.08314835957635937,
+      "expected_loss_rate": 0.04154757231311525,
+      "actual_default_rate_approved": 0.08285302593659942
+    }
+  ],
+  "summary": {
+    "highest_approval_rate": {
+      "policy": "lenient",
+      "value": 0.8328
+    },
+    "lowest_expected_loss_rate": {
+      "policy": "strict",
+      "value": 0.023682
+    }
+  }
+}

@@ -1,4 +1,4 @@
-"""Model training orchestration.
+"""Model training orchestration with MLflow tracking.
 
 Supported model keys
 --------------------
@@ -20,14 +20,16 @@ Usage
     from training.trainer import train_model
 
     train_model("prophet")
-    train_model("sklearn-logreg")
-    train_model("sklearn-rf")
+    train_model("sklearn-logreg", run_name="baseline-v1")
+    train_model("sklearn-rf", experiment_name="pd-experiments")
 """
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
 
+import mlflow
+import mlflow.sklearn
 import numpy as np
 import pandas as pd
 import yaml
@@ -83,11 +85,17 @@ PROPHET_FORECAST_COLS = ["ds", "yhat", "yhat_lower", "yhat_upper"]
 # ---------------------------------------------------------------------------
 
 
-def train_model(model: str) -> Path:
-    """Train a model and persist its artifact.
+def train_model(
+    model: str,
+    run_name: str | None = None,
+    experiment_name: str | None = None,
+) -> Path:
+    """Train a model, log everything to MLflow, and persist the artifact.
 
     Args:
-        model: Model identifier key.
+        model:           Model identifier key.
+        run_name:        Human-readable MLflow run label. Defaults to ``"<model>-run"``.
+        experiment_name: MLflow experiment. Defaults to ``settings.mlflow_experiment_name``.
 
     Returns:
         Path to the saved artifact.
@@ -96,19 +104,40 @@ def train_model(model: str) -> Path:
         ValueError: If ``model`` is not a recognised key.
         FileNotFoundError: If required processed data is not found.
     """
-    log.info("train_model called for model={}", model)
+    experiment_name = experiment_name or settings.mlflow_experiment_name
+    run_name = run_name or f"{model}-run"
 
-    if model == "prophet":
-        return _train_prophet()
-    if model == "sklearn-logreg":
-        return _train_sklearn(model_key="sklearn-logreg", use_rf=False)
-    if model == "sklearn-rf":
-        return _train_sklearn(model_key="sklearn-rf", use_rf=True)
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
+    mlflow.set_experiment(experiment_name)
 
-    raise ValueError(
-        f"Unknown model key '{model}'. "
-        "Supported: 'prophet', 'sklearn-logreg', 'sklearn-rf'"
+    log.info(
+        "train_model called: model={} experiment={} run_name={}",
+        model, experiment_name, run_name,
     )
+
+    with mlflow.start_run(run_name=run_name) as run:
+        mlflow.log_params({
+            "model": model,
+            "random_seed": settings.random_seed,
+            "test_split": settings.test_split,
+            "forecast_horizon": settings.forecast_horizon,
+        })
+
+        if model == "prophet":
+            path = _train_prophet(mlflow_run=run)
+        elif model == "sklearn-logreg":
+            path = _train_sklearn(model_key="sklearn-logreg", use_rf=False, mlflow_run=run)
+        elif model == "sklearn-rf":
+            path = _train_sklearn(model_key="sklearn-rf", use_rf=True, mlflow_run=run)
+        else:
+            raise ValueError(
+                f"Unknown model key '{model}'. "
+                "Supported: 'prophet', 'sklearn-logreg', 'sklearn-rf'"
+            )
+
+        log.info("MLflow run complete: run_id={}", run.info.run_id)
+
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +183,7 @@ def _build_delinquency_ts(perf_df: pd.DataFrame) -> pd.DataFrame:
     return ts[["ds", "y"]].sort_values("ds")
 
 
-def _train_prophet() -> Path:
+def _train_prophet(mlflow_run: Any = None) -> Path:
     """Fit Prophet on aggregate monthly delinquency rate and save artifact."""
     from prophet import Prophet  # import here to keep training import lightweight
 
@@ -187,6 +216,14 @@ def _train_prophet() -> Path:
     aligned = actual.align(predicted, join="inner")
     mae = float((aligned[0] - aligned[1]).abs().mean())
     log.info("Prophet in-sample MAE: {:.4f}", mae)
+
+    if mlflow_run is not None:
+        mlflow.log_metric("mae", mae)
+        mlflow.sklearn.log_model(
+            sk_model=m,
+            name="model",
+            registered_model_name=settings.mlflow_registered_model_name,
+        )
 
     artifact_path = save_model(m, "prophet")
     log.info("Prophet model saved → {}", artifact_path)
@@ -252,7 +289,7 @@ def _build_pd_pipeline(use_rf: bool) -> Pipeline:
         return Pipeline([("imputer", imputer), ("scaler", StandardScaler()), ("clf", clf)])
 
 
-def _train_sklearn(model_key: str, use_rf: bool) -> Path:
+def _train_sklearn(model_key: str, use_rf: bool, mlflow_run: Any = None) -> Path:
     """Fit a sklearn PD classifier and save the pipeline artifact."""
     log.info("Loading feature parquet for {} training...", model_key)
     feat_df = _load_feature_parquet()
@@ -291,6 +328,14 @@ def _train_sklearn(model_key: str, use_rf: bool) -> Path:
     y_pred = (y_pred_proba >= 0.5).astype(int)
     report = classification_report(y_test, y_pred, output_dict=False)
     log.info("Classification report:\n{}", report)
+
+    if mlflow_run is not None:
+        mlflow.log_metrics({"auc": auc})
+        mlflow.sklearn.log_model(
+            sk_model=pipeline,
+            name="model",
+            registered_model_name=settings.mlflow_registered_model_name,
+        )
 
     # Attach evaluation metadata so the registry can surface it
     artifact: dict[str, Any] = {
