@@ -1,0 +1,55 @@
+services:
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-local}/predictive-modeling-ai:${IMAGE_TAG:-latest}
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_SERIALIZE: "true"
+      MODEL_FILENAME: current.joblib
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-mlruns}
+    env_file:
+      - path: .env.prod
+        required: false
+    volumes:
+      - pmai_data:/app/data
+      - pmai_models:/app/models/artifacts
+      - pmai_logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - pmai_net
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.tls.conf:/etc/nginx/nginx.conf:ro
+      - ${TLS_CERTS_DIR:-./deploy/certs}:/etc/nginx/certs:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-check-certificate -qO- https://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - pmai_net
+
+volumes:
+  pmai_data:
+  pmai_models:
+  pmai_logs:
+
+networks:
+  pmai_net:

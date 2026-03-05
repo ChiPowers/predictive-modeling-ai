@@ -28,6 +28,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import hashlib
 import mlflow
 import mlflow.sklearn
 import numpy as np
@@ -89,6 +90,7 @@ def train_model(
     model: str,
     run_name: str | None = None,
     experiment_name: str | None = None,
+    namespace: str | None = None,
 ) -> Path:
     """Train a model, log everything to MLflow, and persist the artifact.
 
@@ -124,11 +126,24 @@ def train_model(
         })
 
         if model == "prophet":
-            path = _train_prophet(mlflow_run=run)
+            if namespace is None:
+                path = _train_prophet(mlflow_run=run)
+            else:
+                path = _train_prophet(mlflow_run=run, namespace=namespace)
         elif model == "sklearn-logreg":
-            path = _train_sklearn(model_key="sklearn-logreg", use_rf=False, mlflow_run=run)
+            if namespace is None:
+                path = _train_sklearn(model_key="sklearn-logreg", use_rf=False, mlflow_run=run)
+            else:
+                path = _train_sklearn(
+                    model_key="sklearn-logreg", use_rf=False, mlflow_run=run, namespace=namespace
+                )
         elif model == "sklearn-rf":
-            path = _train_sklearn(model_key="sklearn-rf", use_rf=True, mlflow_run=run)
+            if namespace is None:
+                path = _train_sklearn(model_key="sklearn-rf", use_rf=True, mlflow_run=run)
+            else:
+                path = _train_sklearn(
+                    model_key="sklearn-rf", use_rf=True, mlflow_run=run, namespace=namespace
+                )
         else:
             raise ValueError(
                 f"Unknown model key '{model}'. "
@@ -145,7 +160,7 @@ def train_model(
 # ---------------------------------------------------------------------------
 
 
-def _load_performance_parquet() -> pd.DataFrame:
+def _load_performance_parquet() -> tuple[pd.DataFrame, list[Path]]:
     with open(_DATA_PATHS) as fh:
         cfg = yaml.safe_load(fh)["fannie_mae"]
     perf_dir = Path(cfg["processed_dir"]) / "performance"
@@ -155,7 +170,25 @@ def _load_performance_parquet() -> pd.DataFrame:
             f"No performance parquet files in {perf_dir}. "
             "Run `pmai ingest --source fannie-mae` first."
         )
-    return pd.concat([pd.read_parquet(p) for p in paths], ignore_index=True)
+    return pd.concat([pd.read_parquet(p) for p in paths], ignore_index=True), paths
+
+
+def _file_lineage(paths: list[Path]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for path in paths:
+        h = hashlib.sha256()
+        with path.open("rb") as fh:
+            while True:
+                block = fh.read(1024 * 1024)
+                if not block:
+                    break
+                h.update(block)
+        records.append({
+            "path": str(path),
+            "size_bytes": path.stat().st_size,
+            "sha256": h.hexdigest(),
+        })
+    return records
 
 
 def _build_delinquency_ts(perf_df: pd.DataFrame) -> pd.DataFrame:
@@ -183,12 +216,12 @@ def _build_delinquency_ts(perf_df: pd.DataFrame) -> pd.DataFrame:
     return ts[["ds", "y"]].sort_values("ds")
 
 
-def _train_prophet(mlflow_run: Any = None) -> Path:
+def _train_prophet(mlflow_run: Any = None, namespace: str | None = None) -> Path:
     """Fit Prophet on aggregate monthly delinquency rate and save artifact."""
     from prophet import Prophet  # import here to keep training import lightweight
 
     log.info("Loading performance data for Prophet training...")
-    perf_df = _load_performance_parquet()
+    perf_df, perf_paths = _load_performance_parquet()
     ts = _build_delinquency_ts(perf_df)
     log.info("Time series built: {} monthly observations", len(ts))
 
@@ -225,7 +258,17 @@ def _train_prophet(mlflow_run: Any = None) -> Path:
             registered_model_name=settings.mlflow_registered_model_name,
         )
 
-    artifact_path = save_model(m, "prophet")
+    lineage_meta: dict[str, Any] = {
+        "model_key": "prophet",
+        "metrics": {"mae": mae},
+        "training_data_lineage": _file_lineage(perf_paths),
+    }
+    if mlflow_run is not None:
+        lineage_meta["mlflow_run_id"] = mlflow_run.info.run_id
+
+    artifact_path = save_model(
+        m, "prophet", metadata=lineage_meta, set_active=True, namespace=namespace
+    )
     log.info("Prophet model saved → {}", artifact_path)
     return artifact_path
 
@@ -235,7 +278,7 @@ def _train_prophet(mlflow_run: Any = None) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def _load_feature_parquet() -> pd.DataFrame:
+def _load_feature_parquet() -> tuple[pd.DataFrame, Path]:
     with open(_DATA_PATHS) as fh:
         cfg = yaml.safe_load(fh)["fannie_mae"]
     feat_path = Path(cfg["processed_dir"]) / "features" / "features.parquet"
@@ -244,7 +287,7 @@ def _load_feature_parquet() -> pd.DataFrame:
             f"Feature parquet not found at {feat_path}. "
             "Run `pmai features --source fannie-mae` first."
         )
-    return pd.read_parquet(feat_path)
+    return pd.read_parquet(feat_path), feat_path
 
 
 def _make_default_label(df: pd.DataFrame) -> pd.Series:
@@ -289,10 +332,15 @@ def _build_pd_pipeline(use_rf: bool) -> Pipeline:
         return Pipeline([("imputer", imputer), ("scaler", StandardScaler()), ("clf", clf)])
 
 
-def _train_sklearn(model_key: str, use_rf: bool, mlflow_run: Any = None) -> Path:
+def _train_sklearn(
+    model_key: str,
+    use_rf: bool,
+    mlflow_run: Any = None,
+    namespace: str | None = None,
+) -> Path:
     """Fit a sklearn PD classifier and save the pipeline artifact."""
     log.info("Loading feature parquet for {} training...", model_key)
-    feat_df = _load_feature_parquet()
+    feat_df, feat_path = _load_feature_parquet()
 
     # Select feature columns that are present
     feature_cols = [c for c in _PD_FEATURE_COLS if c in feat_df.columns]
@@ -345,6 +393,16 @@ def _train_sklearn(model_key: str, use_rf: bool, mlflow_run: Any = None) -> Path
         "model_key": model_key,
     }
 
-    path = save_model(artifact, model_key)
+    lineage_meta: dict[str, Any] = {
+        "model_key": model_key,
+        "metrics": {"auc": auc},
+        "training_data_lineage": _file_lineage([feat_path]),
+    }
+    if mlflow_run is not None:
+        lineage_meta["mlflow_run_id"] = mlflow_run.info.run_id
+
+    path = save_model(
+        artifact, model_key, metadata=lineage_meta, set_active=True, namespace=namespace
+    )
     log.info("{} model saved → {} (AUC={:.4f})", model_key, path, auc)
     return path

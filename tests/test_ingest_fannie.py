@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -123,14 +124,14 @@ def _make_performance_row(**overrides) -> dict:
 
 def test_origination_schema_validates_valid_row() -> None:
     df = pd.DataFrame([_make_origination_row()])
-    validated = ORIGINATION_SCHEMA.validate(df.replace("", pd.NA), lazy=True)
+    validated = ORIGINATION_SCHEMA.validate(df.replace("", np.nan), lazy=True)
     assert validated is not None
     assert len(validated) == 1
 
 
 def test_performance_schema_validates_valid_row() -> None:
     df = pd.DataFrame([_make_performance_row()])
-    validated = PERFORMANCE_SCHEMA.validate(df.replace("", pd.NA), lazy=True)
+    validated = PERFORMANCE_SCHEMA.validate(df.replace("", np.nan), lazy=True)
     assert validated is not None
     assert len(validated) == 1
 
@@ -139,7 +140,7 @@ def test_origination_schema_rejects_bad_credit_score() -> None:
     import pandera.errors as pe
 
     df = pd.DataFrame([_make_origination_row(credit_score="100")])  # below 300
-    df = df.replace("", pd.NA)
+    df = df.replace("", np.nan)
     with pytest.raises((pe.SchemaError, pe.SchemaErrors)):
         ORIGINATION_SCHEMA.validate(df, lazy=False)
 
@@ -147,7 +148,7 @@ def test_origination_schema_rejects_bad_credit_score() -> None:
 def test_origination_schema_allows_null_credit_score() -> None:
     """Nullable credit score (e.g. 9999 missing marker → NaN) must pass."""
     df = pd.DataFrame([_make_origination_row(credit_score="")])
-    df = df.replace("", pd.NA)
+    df = df.replace("", np.nan)
     validated = ORIGINATION_SCHEMA.validate(df, lazy=True)
     assert pd.isna(validated["credit_score"].iloc[0])
 

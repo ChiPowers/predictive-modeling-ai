@@ -192,19 +192,14 @@ class TestRunScoreDrift:
         from monitoring.score_drift import run_score_drift
 
         ref, cur = stable_series
-        # Normalise to [0,1]
-        ref_norm = (ref - ref.min()) / (ref.max() - ref.min())
-        cur_norm = (cur - cur.min()) / (cur.max() - cur.min())
-        result = run_score_drift(ref_norm, cur_norm)
+        result = run_score_drift(ref, cur)
         assert result["severity"] in ("ok", "warning")
 
     def test_drifted_triggers_alert(self, drifted_series: tuple[pd.Series, pd.Series]) -> None:
         from monitoring.score_drift import run_score_drift
 
         ref, cur = drifted_series
-        ref_norm = (ref - ref.min()) / (ref.max() - ref.min())
-        cur_norm = (cur - cur.min()) / (cur.max() - cur.min())
-        result = run_score_drift(ref_norm, cur_norm)
+        result = run_score_drift(ref, cur)
         assert result["alert"] is True
 
     def test_output_schema(self, stable_series: tuple[pd.Series, pd.Series]) -> None:

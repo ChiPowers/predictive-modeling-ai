@@ -1,12 +1,19 @@
 """Tests for features."""
 from __future__ import annotations
 
-import pytest
+import pandas as pd
 
 
-def test_build_features_raises_not_implemented() -> None:
-    """Feature engineering must raise NotImplementedError until implemented."""
-    from features.engineer import build_features
+def test_build_features_delegates_to_pipeline(monkeypatch) -> None:
+    """features.engineer.build_features delegates to build_features.run()."""
+    from features import engineer
 
-    with pytest.raises(NotImplementedError):
-        build_features("test-source")
+    expected = pd.DataFrame({"x": [1, 2, 3]})
+
+    def fake_run(source: str) -> pd.DataFrame:
+        assert source == "fannie-mae"
+        return expected
+
+    monkeypatch.setattr(engineer, "run_feature_pipeline", fake_run)
+    out = engineer.build_features("fannie-mae")
+    assert out.equals(expected)

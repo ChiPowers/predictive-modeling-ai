@@ -12,6 +12,8 @@ Or via the installed script:
 """
 from __future__ import annotations
 
+from typing import Optional
+
 import typer
 
 from config.settings import settings
@@ -70,8 +72,8 @@ def features(
 @app.command()
 def train(
     model: str = typer.Option("prophet", help="Model identifier (prophet | sklearn-logreg | sklearn-rf)"),
-    run_name: str | None = typer.Option(None, "--run-name", help="MLflow run label"),
-    experiment_name: str | None = typer.Option(
+    run_name: Optional[str] = typer.Option(None, "--run-name", help="MLflow run label"),
+    experiment_name: Optional[str] = typer.Option(
         None, "--experiment-name", help="MLflow experiment name (overrides settings)"
     ),
 ) -> None:
@@ -101,8 +103,8 @@ def serve() -> None:
 def pipeline(
     source: str = typer.Option(..., help="Dataset source key"),
     model: str = typer.Option("prophet", help="Model identifier"),
-    run_name: str | None = typer.Option(None, "--run-name", help="MLflow run label"),
-    experiment_name: str | None = typer.Option(
+    run_name: Optional[str] = typer.Option(None, "--run-name", help="MLflow run label"),
+    experiment_name: Optional[str] = typer.Option(
         None, "--experiment-name", help="MLflow experiment name (overrides settings)"
     ),
 ) -> None:

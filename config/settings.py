@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000)
     api_reload: bool = Field(default=False)
 
+    # ── Auth ───────────────────────────────────────────────────────────────
+    auth_enabled: bool = Field(default=True)
+    auth_secret: str = Field(default="change-me-dev-secret")
+    auth_token_ttl_minutes: int = Field(default=720)
+
 
 # Singleton — import and reuse across modules
 settings = Settings()

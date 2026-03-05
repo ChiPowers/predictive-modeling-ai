@@ -118,7 +118,7 @@ PERFORMANCE_COLUMNS: list[str] = [
 ORIGINATION_SCHEMA = DataFrameSchema(
     columns={
         "credit_score": Column(
-            _I,
+            _F,
             checks=[pa.Check.in_range(300, 850)],
             nullable=True,
             coerce=True,

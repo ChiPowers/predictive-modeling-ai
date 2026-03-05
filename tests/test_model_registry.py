@@ -48,3 +48,29 @@ def test_load_missing_artifact_raises_file_not_found() -> None:
     """load() raises FileNotFoundError for an artifact that does not exist."""
     with pytest.raises(FileNotFoundError, match="Model artifact not found"):
         registry.load("does-not-exist")
+
+
+def test_save_creates_version_manifest_entry() -> None:
+    """save() writes versioned metadata to the local manifest."""
+    model = LinearRegression().fit([[1], [2]], [2.0, 4.0])
+    registry.save(model, "lr", metadata={"metrics": {"mae": 0.1}})
+
+    versions = registry.get_versions("lr")
+    assert len(versions) == 1
+    assert versions[0]["name"] == "lr"
+    assert versions[0]["metadata"]["metrics"]["mae"] == 0.1
+    assert Path(versions[0]["artifact_path"]).exists()
+
+
+def test_activate_sets_current_alias() -> None:
+    """activate() writes active metadata and current.joblib alias artifact."""
+    model = LinearRegression().fit([[1], [2]], [2.0, 4.0])
+    registry.save(model, "lr")
+    active = registry.activate("lr")
+
+    assert active["name"] == "lr"
+    current_path = Path(active["current_alias_path"])
+    assert current_path.exists()
+    loaded = registry.get_active()
+    assert loaded is not None
+    assert loaded["name"] == "lr"

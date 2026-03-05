@@ -45,6 +45,9 @@ def load(source: str) -> pd.DataFrame:
     if source == "fannie-mae":
         return _load_fannie_mae()
 
+    if source == "fred":
+        return _load_fred()
+
     if source.startswith("csv:"):
         return _load_csv(source[4:])
 
@@ -53,7 +56,7 @@ def load(source: str) -> pd.DataFrame:
 
     raise ValueError(
         f"Unknown source key '{source}'. "
-        "Supported: 'fannie-mae', 'csv:<path>', 'parquet:<path>'"
+        "Supported: 'fannie-mae', 'fred', 'csv:<path>', 'parquet:<path>'"
     )
 
 
@@ -85,6 +88,15 @@ def _load_csv(path: str) -> pd.DataFrame:
         raise FileNotFoundError(f"CSV file not found: {p}")
     df = pd.read_csv(p)
     log.info("Loaded CSV {} ({} rows, {} cols)", p, len(df), df.shape[1])
+    return df
+
+
+def _load_fred() -> pd.DataFrame:
+    """Run FRED ingestion and return the monthly macro DataFrame."""
+    from data_ingestion.ingest_fred import ingest_fred
+
+    df = ingest_fred()
+    log.info("Loaded FRED macro data ({} rows, {} cols)", len(df), df.shape[1])
     return df
 
 

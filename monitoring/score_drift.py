@@ -32,6 +32,10 @@ DEFAULT_N_BINS = 10
 # Percentiles reported in the output
 REPORT_PERCENTILES = [10, 25, 50, 75, 90]
 
+# Guardrail against large-sample false positives: require meaningful distance
+# before elevating KS p-value significance to an alert.
+KS_STAT_ALERT = 0.30
+
 
 def _percentile_dict(series: pd.Series) -> dict[str, float]:
     arr = series.dropna().to_numpy(dtype=float)
@@ -71,7 +75,7 @@ def run_score_drift(
     cur_mean = float(current_scores.dropna().mean())
     mean_shift = round(cur_mean - ref_mean, 6)
 
-    if psi_val >= PSI_ALERT or ks["p_value"] < KS_ALPHA:
+    if psi_val >= PSI_ALERT or (ks["p_value"] < KS_ALPHA and ks["statistic"] >= KS_STAT_ALERT):
         severity = "alert"
     elif psi_val >= PSI_WARN:
         severity = "warning"

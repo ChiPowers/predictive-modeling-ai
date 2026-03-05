@@ -17,16 +17,18 @@ def test_health_ok(client: TestClient) -> None:
     """GET /health returns 200 with status ok."""
     resp = client.get("/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok"}
+    payload = resp.json()
+    assert payload["status"] == "ok"
+    assert "model_loaded" in payload
 
 
-def test_forecast_stub_returns_500(client: TestClient) -> None:
-    """POST /forecast returns 500 until the endpoint is implemented."""
+def test_forecast_missing_model_returns_503(client: TestClient) -> None:
+    """POST /forecast returns 503 when the prophet artifact is not present."""
     resp = client.post(
         "/forecast",
         json={"source": "csv:data/raw/sample.csv", "model": "prophet", "horizon": 7},
     )
-    assert resp.status_code == 500
+    assert resp.status_code == 503
 
 
 def test_forecast_invalid_payload_returns_422(client: TestClient) -> None:

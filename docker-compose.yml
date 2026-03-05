@@ -12,7 +12,8 @@ services:
       LOG_LEVEL: INFO
       LOG_SERIALIZE: "true"
       FORECAST_HORIZON: "30"
-      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-mlruns}
+      MODEL_FILENAME: current.joblib
     env_file:
       - path: .env
         required: false          # .env is optional; env block above takes precedence
@@ -20,13 +21,10 @@ services:
       - ./data:/app/data
       - ./models/artifacts:/app/models/artifacts
       - ./logs:/app/logs
-    depends_on:
-      mlflow:
-        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c",
-             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"]
       interval: 30s
       timeout: 5s
       start_period: 15s
@@ -35,6 +33,7 @@ services:
   # ── MLflow tracking server (optional — comment out if not needed) ────────────
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.13.2
+    profiles: ["mlflow"]
     ports:
       - "5000:5000"
     volumes:

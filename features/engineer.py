@@ -1,23 +1,24 @@
-"""Feature engineering pipeline."""
+"""CLI-facing feature engineering delegate.
+
+The heavy lifting lives in :mod:`features.build_features`; this module keeps
+the call site in ``main.py`` simple and stable.
+"""
 from __future__ import annotations
 
 import pandas as pd
 
+from features.build_features import run as run_feature_pipeline
 from utils.logging import log
 
 
 def build_features(source: str) -> pd.DataFrame:
-    """Transform raw data for ``source`` into model-ready features.
-
-    Reads from ``data/raw/<source>.parquet`` and writes to
-    ``data/processed/<source>_features.parquet``.
+    """Build and persist model features for a source key.
 
     Args:
-        source: Dataset source key (must already be ingested).
+        source: Dataset source key (currently ``"fannie-mae"``).
 
     Returns:
         Feature DataFrame.
     """
-    log.info("build_features called for source={}", source)
-    # TODO: implement lag features, rolling statistics, calendar features, etc.
-    raise NotImplementedError("Feature engineering not yet implemented")
+    log.info("Delegating feature build to features.build_features.run for source={}", source)
+    return run_feature_pipeline(source)

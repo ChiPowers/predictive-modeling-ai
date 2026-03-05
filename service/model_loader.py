@@ -11,7 +11,7 @@ import pandas as pd
 from service.schemas import Factor
 
 _ARTIFACT_DIR = Path(os.getenv("MODEL_ARTIFACT_DIR", "models/artifacts"))
-_MODEL_FILENAME = os.getenv("MODEL_FILENAME", "model.joblib")
+_MODEL_FILENAME = os.getenv("MODEL_FILENAME", "current.joblib")
 _TOP_N_FACTORS = int(os.getenv("TOP_N_FACTORS", "5"))
 
 
@@ -24,7 +24,12 @@ class ModelLoader:
         self._feature_names: list[str] = []
 
     def load(self, artifact_dir: Path | None = None, filename: str | None = None) -> None:
-        path = (artifact_dir or _ARTIFACT_DIR) / (filename or _MODEL_FILENAME)
+        target_name = filename or _MODEL_FILENAME
+        path = (artifact_dir or _ARTIFACT_DIR) / target_name
+        if not path.exists() and target_name == "current.joblib":
+            legacy = (artifact_dir or _ARTIFACT_DIR) / "model.joblib"
+            if legacy.exists():
+                path = legacy
         if not path.exists():
             raise FileNotFoundError(f"Model artifact not found: {path}")
 

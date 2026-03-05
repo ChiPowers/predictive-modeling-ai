@@ -49,3 +49,121 @@ class BatchScoreRequest(BaseModel):
 class BatchScoreResponse(BaseModel):
     results: list[ScoreResponse]
     count: int
+
+
+class ModelArtifactStatus(BaseModel):
+    name: str
+    path: str
+    exists: bool
+
+
+class ApiMetadataResponse(BaseModel):
+    app_name: str
+    version: str
+    mode: str
+    capabilities: dict[str, list[str]]
+    artifacts: list[ModelArtifactStatus]
+    monitoring_available: bool
+
+
+class MonitoringSummaryResponse(BaseModel):
+    available: bool
+    summary_markdown: str | None = None
+    drift_features: dict[str, Any] | None = None
+    score_drift: dict[str, Any] | None = None
+    perf_drift: dict[str, Any] | None = None
+
+
+class TrainJobRequest(BaseModel):
+    model: str = Field(default="sklearn-rf")
+    run_name: str | None = None
+    experiment_name: str | None = None
+
+
+class PipelineJobRequest(BaseModel):
+    source: str = Field(default="fannie-mae")
+    model: str = Field(default="sklearn-rf")
+    run_name: str | None = None
+    experiment_name: str | None = None
+
+
+class MonitorJobRequest(BaseModel):
+    reference_path: str
+    current_path: str
+    score_ref_col: str = Field(default="pd_score")
+    score_cur_col: str = Field(default="pd_score")
+    label_col: str = Field(default="default_flag")
+    period_col: str = Field(default="monthly_reporting_period")
+    output_dir: str = Field(default="reports/monitoring")
+    window: int = Field(default=3, ge=1)
+    auc_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
+
+
+class JobStatusResponse(BaseModel):
+    id: str
+    job_type: str
+    status: str
+    created_at: str
+    started_at: str | None
+    finished_at: str | None
+    input_payload: dict[str, Any]
+    result: dict[str, Any] | list[Any] | str | int | float | bool | None
+    error: str | None
+
+
+class JobListResponse(BaseModel):
+    jobs: list[JobStatusResponse]
+
+
+class ModelEntryResponse(BaseModel):
+    name: str
+    version_count: int
+    latest_version_id: str | None
+
+
+class ModelVersionResponse(BaseModel):
+    name: str
+    version_id: str
+    created_at: str
+    artifact_path: str
+    artifact_filename: str
+    sha256: str
+    metadata: dict[str, Any]
+
+
+class ModelCatalogResponse(BaseModel):
+    models: list[ModelEntryResponse]
+    active: dict[str, Any] | None
+
+
+class ActivateModelRequest(BaseModel):
+    name: str
+    version_id: str | None = None
+
+
+class ActiveModelResponse(BaseModel):
+    name: str
+    version_id: str
+    artifact_path: str
+    current_alias_path: str
+    updated_at: str
+
+
+class AuthRegisterRequest(BaseModel):
+    username: str = Field(min_length=3, max_length=64)
+    password: str = Field(min_length=8, max_length=256)
+
+
+class AuthLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    username: str
+
+
+class AuthMeResponse(BaseModel):
+    username: str
