@@ -45,7 +45,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest==8.2.2",
-    "pytest-cov==5.0.0",
+    "pytest-cov==6.0.0",
     "ruff==0.4.10",
     "mypy==1.10.1",
     "types-requests==2.32.0.20240712",
@@ -82,10 +82,16 @@ strict = true
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+omit = ["tests/*"]
+
+# ---------------------------------------------------------------------------
 # Pytest
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v --cov=. --cov-report=term-missing --cov-omit=tests/*"
+addopts = "-v"
 log_cli = true
 log_cli_level = "INFO"
