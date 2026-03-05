@@ -347,6 +347,7 @@ pinned `numpy<2.0` as mitigation).
 - [`reports/model_card.md`](reports/model_card.md) — intended use, limitations, risk
   considerations, and monitoring plan
 - [`data/README.md`](data/README.md) — dataset download instructions
+- [`docs/RENDER_DEPLOY.md`](docs/RENDER_DEPLOY.md) — Render Blueprint deployment guide
 Ingest public datasets, engineer time-series features, train forecasting models, and visualise historic and predicted trends.
 
 ---

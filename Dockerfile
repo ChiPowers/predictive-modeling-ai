@@ -56,8 +56,8 @@ ENV PYTHONUNBUFFERED=1 \
 
 EXPOSE 8000
 
-# Healthcheck — relies on the /health endpoint
+# Healthcheck — uses dynamic PORT when provided (Render), falls back to 8000.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+    CMD sh -c "python -c \"import os,urllib.request; p=os.getenv('PORT','8000'); urllib.request.urlopen(f'http://localhost:{p}/health')\""
 
-CMD ["uvicorn", "service.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn service.api:app --host 0.0.0.0 --port ${PORT:-8000}"]
