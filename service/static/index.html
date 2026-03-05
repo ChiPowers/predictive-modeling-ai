@@ -33,64 +33,6 @@
       </ol>
     </section>
 
-    <section class="grid two">
-      <article class="card">
-        <h2>Forecast</h2>
-        <form id="forecastForm" class="stack">
-          <label>Source
-            <input name="source" value="fannie-mae" />
-          </label>
-          <label>Horizon (months)
-            <input name="horizon" type="number" min="1" max="120" value="24" />
-          </label>
-          <button type="submit">Run Forecast</button>
-        </form>
-        <pre id="forecastView" class="mono">No forecast yet.</pre>
-      </article>
-
-      <article class="card">
-        <h2>Single Loan Score</h2>
-        <form id="scoreForm" class="stack">
-          <label>Threshold
-            <input name="threshold" type="number" min="0" max="1" step="0.01" value="0.5" />
-          </label>
-          <label>Features JSON
-            <textarea name="features" rows="9">{
-  "credit_score": 720,
-  "orig_ltv": 80,
-  "orig_dti": 35,
-  "orig_upb": 350000,
-  "orig_interest_rate": 6.5
-}</textarea>
-          </label>
-          <button type="submit">Score Loan</button>
-        </form>
-        <pre id="scoreView" class="mono">No score yet.</pre>
-      </article>
-    </section>
-
-    <section class="card">
-      <h2>Batch Score</h2>
-      <form id="batchForm" class="stack">
-        <label>Records JSON
-          <textarea name="records" rows="10">[
-  {
-    "features": {
-      "credit_score": 700,
-      "orig_ltv": 90,
-      "orig_dti": 42,
-      "orig_upb": 420000,
-      "orig_interest_rate": 6.9
-    },
-    "threshold": 0.5
-  }
-]</textarea>
-        </label>
-        <button type="submit">Batch Score</button>
-      </form>
-      <pre id="batchView" class="mono">No batch result yet.</pre>
-    </section>
-
     <section class="card">
       <h2>Background Jobs</h2>
       <form id="jobForm" class="stack">
@@ -134,6 +76,64 @@
         </div>
       </form>
       <pre id="modelsView" class="mono">No model catalog loaded yet.</pre>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <h2>Single Loan Score</h2>
+        <form id="scoreForm" class="stack">
+          <label>Threshold
+            <input name="threshold" type="number" min="0" max="1" step="0.01" value="0.5" />
+          </label>
+          <label>Features JSON
+            <textarea name="features" rows="9">{
+  "credit_score": 720,
+  "orig_ltv": 80,
+  "orig_dti": 35,
+  "orig_upb": 350000,
+  "orig_interest_rate": 6.5
+}</textarea>
+          </label>
+          <button type="submit">Score Loan</button>
+        </form>
+        <pre id="scoreView" class="mono">No score yet.</pre>
+      </article>
+
+      <article class="card">
+        <h2>Forecast</h2>
+        <form id="forecastForm" class="stack">
+          <label>Source
+            <input name="source" value="fannie-mae" />
+          </label>
+          <label>Horizon (months)
+            <input name="horizon" type="number" min="1" max="120" value="24" />
+          </label>
+          <button type="submit">Run Forecast</button>
+        </form>
+        <pre id="forecastView" class="mono">No forecast yet.</pre>
+      </article>
+    </section>
+
+    <section class="card">
+      <h2>Batch Score</h2>
+      <form id="batchForm" class="stack">
+        <label>Records JSON
+          <textarea name="records" rows="10">[
+  {
+    "features": {
+      "credit_score": 700,
+      "orig_ltv": 90,
+      "orig_dti": 42,
+      "orig_upb": 420000,
+      "orig_interest_rate": 6.9
+    },
+    "threshold": 0.5
+  }
+]</textarea>
+        </label>
+        <button type="submit">Batch Score</button>
+      </form>
+      <pre id="batchView" class="mono">No batch result yet.</pre>
     </section>
   </main>
 

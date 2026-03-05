@@ -146,7 +146,8 @@ def _run_pipeline_job(req: PipelineJobRequest) -> dict[str, Any]:
     from training.trainer import train_model
 
     load(req.source)
-    feature_df = build_features(req.source)
+    feature_groups = ["origination", "macro_stub"] if settings.low_memory_mode else None
+    feature_df = build_features(req.source, groups=feature_groups)
     artifact_path = train_model(
         req.model,
         run_name=req.run_name,

@@ -102,8 +102,8 @@ class MonitorJobRequest(BaseModel):
 class SeedDemoJobRequest(BaseModel):
     output_dir: str = Field(default="data/raw/fannie_mae/combined")
     filename: str = Field(default="demo_2025Q1.csv")
-    n_loans: int = Field(default=2500, ge=200, le=20000)
-    months: int = Field(default=18, ge=6, le=60)
+    n_loans: int = Field(default=120, ge=40, le=4000)
+    months: int = Field(default=6, ge=4, le=24)
     seed: int = Field(default=42)
     overwrite: bool = Field(default=True)
 

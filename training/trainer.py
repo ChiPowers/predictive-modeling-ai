@@ -354,6 +354,31 @@ def _train_sklearn(
     X = feat_df[feature_cols].copy()
     y = _make_default_label(feat_df)
 
+    if settings.low_memory_mode and len(X) > settings.low_memory_max_train_rows:
+        max_rows = settings.low_memory_max_train_rows
+        log.info("Low-memory mode enabled: downsampling training frame from {:,} to {:,} rows", len(X), max_rows)
+        if y.nunique(dropna=True) > 1:
+            sample_idx = (
+                pd.DataFrame({"idx": X.index, "y": y})
+                .groupby("y", group_keys=False)
+                .apply(
+                    lambda g: g.sample(
+                        n=max(1, int(round(max_rows * len(g) / len(X)))),
+                        random_state=settings.random_seed,
+                    )
+                )["idx"]
+                .tolist()
+            )
+            sample_idx = sample_idx[:max_rows]
+        else:
+            sample_idx = (
+                pd.Series(X.index)
+                .sample(n=max_rows, random_state=settings.random_seed)
+                .tolist()
+            )
+        X = X.loc[sample_idx].copy()
+        y = y.loc[sample_idx].copy()
+
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
         test_size=settings.test_split,

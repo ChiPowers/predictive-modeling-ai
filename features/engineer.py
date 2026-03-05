@@ -11,7 +11,7 @@ from features.build_features import run as run_feature_pipeline
 from utils.logging import log
 
 
-def build_features(source: str) -> pd.DataFrame:
+def build_features(source: str, groups: list[str] | None = None) -> pd.DataFrame:
     """Build and persist model features for a source key.
 
     Args:
@@ -21,4 +21,4 @@ def build_features(source: str) -> pd.DataFrame:
         Feature DataFrame.
     """
     log.info("Delegating feature build to features.build_features.run for source={}", source)
-    return run_feature_pipeline(source)
+    return run_feature_pipeline(source, groups=groups)

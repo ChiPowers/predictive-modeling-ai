@@ -20,8 +20,8 @@ def seed_demo_data(
     *,
     output_dir: str = "data/raw/fannie_mae/combined",
     filename: str = "demo_2025Q1.csv",
-    n_loans: int = 2500,
-    months: int = 18,
+    n_loans: int = 120,
+    months: int = 6,
     seed: int = 42,
     overwrite: bool = True,
 ) -> dict[str, str | int]:
@@ -116,4 +116,3 @@ def seed_demo_data(
         "n_loans": n_loans,
         "months": months,
     }
-

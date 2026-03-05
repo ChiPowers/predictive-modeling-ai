@@ -3,8 +3,8 @@ const jobPayloadTemplates = {
   "seed-demo": {
     output_dir: "data/raw/fannie_mae/combined",
     filename: "demo_2025Q1.csv",
-    n_loans: 250,
-    months: 8,
+    n_loans: 120,
+    months: 6,
     seed: 42,
     overwrite: true,
   },

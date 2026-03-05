@@ -42,8 +42,8 @@ Use the **Background Jobs** panel:
 {
   "output_dir": "data/raw/fannie_mae/combined",
   "filename": "demo_2025Q1.csv",
-  "n_loans": 2500,
-  "months": 18,
+  "n_loans": 120,
+  "months": 6,
   "seed": 42,
   "overwrite": true
 }
@@ -61,7 +61,7 @@ Use the **Background Jobs** panel:
 ```json
 {
   "source": "fannie-mae",
-  "model": "sklearn-rf"
+  "model": "sklearn-logreg"
 }
 ```
 

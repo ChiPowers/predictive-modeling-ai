@@ -10,8 +10,9 @@ def test_build_features_delegates_to_pipeline(monkeypatch) -> None:
 
     expected = pd.DataFrame({"x": [1, 2, 3]})
 
-    def fake_run(source: str) -> pd.DataFrame:
+    def fake_run(source: str, groups=None) -> pd.DataFrame:
         assert source == "fannie-mae"
+        assert groups is None
         return expected
 
     monkeypatch.setattr(engineer, "run_feature_pipeline", fake_run)

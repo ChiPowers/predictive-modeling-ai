@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0")
     api_port: int = Field(default=8000)
     api_reload: bool = Field(default=False)
+    low_memory_mode: bool = Field(default=False)
+    low_memory_max_train_rows: int = Field(default=3000, ge=200)
 
     # ── Auth ───────────────────────────────────────────────────────────────
     auth_enabled: bool = Field(default=True)

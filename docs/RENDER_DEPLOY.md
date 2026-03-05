@@ -25,6 +25,7 @@ The current `render.yaml` is configured for lowest cost:
 
 - no persistent disk
 - `AUTH_ENABLED=false` (demo mode)
+- `LOW_MEMORY_MODE=true` with capped training rows
 - Docker deploy + `/health` check
 
 Tradeoff: data, trained models, and user state are ephemeral and may reset on

@@ -11,5 +11,9 @@ services:
         value: INFO
       - key: LOG_SERIALIZE
         value: "true"
+      - key: LOW_MEMORY_MODE
+        value: "true"
+      - key: LOW_MEMORY_MAX_TRAIN_ROWS
+        value: "1500"
       - key: AUTH_ENABLED
         value: "false"
