@@ -453,6 +453,11 @@ async def activate_model(req: ActivateModelRequest) -> ActiveModelResponse:
         active = model_registry.activate(req.name, req.version_id)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    try:
+        current_alias = Path(active["current_alias_path"])
+        scoring_model.load(current_alias.parent, current_alias.name)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Activated model but could not reload scoring runtime: {}", exc)
     return ActiveModelResponse(**active)
 
 

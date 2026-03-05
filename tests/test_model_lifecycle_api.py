@@ -17,7 +17,17 @@ def client_with_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Tes
     return TestClient(api.app, raise_server_exceptions=False)
 
 
-def test_models_catalog_and_activate_flow(client_with_registry: TestClient) -> None:
+def test_models_catalog_and_activate_flow(
+    client_with_registry: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, str]] = []
+
+    def _fake_load(path: Path | None = None, filename: str | None = None) -> None:
+        calls.append((str(path), str(filename)))
+
+    monkeypatch.setattr(api.scoring_model, "load", _fake_load)
+
     model = LinearRegression().fit([[1], [2]], [2.0, 4.0])
     registry.save(model, "lr")
 
@@ -35,6 +45,7 @@ def test_models_catalog_and_activate_flow(client_with_registry: TestClient) -> N
     activated = client_with_registry.post("/models/activate", json={"name": "lr"})
     assert activated.status_code == 200
     assert activated.json()["name"] == "lr"
+    assert len(calls) == 1
 
     active = client_with_registry.get("/models/active")
     assert active.status_code == 200
