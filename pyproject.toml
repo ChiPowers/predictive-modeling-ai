@@ -90,6 +90,6 @@ ignore_missing_imports = true
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-v --cov=. --cov-report=term-missing --cov-omit=tests/*"
+addopts = "-v"
 log_cli = true
 log_cli_level = "INFO"
