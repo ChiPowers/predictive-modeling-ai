@@ -47,6 +47,10 @@ mlartifacts/
 logs/*.log
 !logs/.gitkeep
 
+# ── Reports ──────────────────────────────────────────────────────────────────
+reports/figures/*
+!reports/figures/.gitkeep
+
 # ── Notebooks ────────────────────────────────────────────────────────────────
 .ipynb_checkpoints/
 *.ipynb
