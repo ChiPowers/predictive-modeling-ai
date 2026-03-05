@@ -42,14 +42,16 @@ dependencies = [
     "pandera==0.20.3",
     # YAML config
     "pyyaml==6.0.2",
+    # Experiment tracking & model registry
+    "mlflow>=2.17",
     # Serialisation
-    "joblib>=1.4",
+    "joblib==1.4.2",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest==8.2.2",
-    "pytest-cov==5.0.0",
+    "pytest-cov==6.0.0",
     "ruff==0.4.10",
     "mypy==1.10.1",
     "types-requests==2.32.0.20240712",
@@ -84,6 +86,12 @@ known-first-party = ["data_ingestion", "features", "training", "models", "servic
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+omit = ["tests/*"]
 
 # ---------------------------------------------------------------------------
 # Pytest

@@ -1,0 +1,33 @@
+training:
+  # Column in the features DataFrame that holds the observation date.
+  # Values must be coercible to datetime64.
+  date_col: "date"
+
+  # Binary target column (0/1).
+  target_col: "target"
+
+  # Feature columns to pass to the model.
+  # Replace with the actual engineered column names once the feature pipeline
+  # is implemented.
+  feature_cols:
+    - "feature_1"
+    - "feature_2"
+    - "feature_3"
+
+  # Artifact name written to models/artifacts/<model_name>.joblib
+  model_name: "baseline_logreg"
+
+  # Train / val / test fractions — must sum to 1.0.
+  # Splits are cut at month boundaries, so actual row counts may deviate
+  # slightly from these targets for unevenly distributed data.
+  split:
+    train_ratio: 0.6
+    val_ratio: 0.2
+    test_ratio: 0.2
+
+  # sklearn LogisticRegression kwargs
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+    solver: "lbfgs"
+    random_state: 42
