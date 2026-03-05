@@ -42,7 +42,7 @@ def test_ui_root_serves_html() -> None:
     resp = client.get("/")
     assert resp.status_code == 200
     assert "text/html" in resp.headers.get("content-type", "")
-    assert "Mortgage Risk Ops Console" in resp.text
+    assert "Mortgage Risk Demo Console" in resp.text
 
 
 def test_ui_static_css_served() -> None:

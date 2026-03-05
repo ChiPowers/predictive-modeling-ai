@@ -15,7 +15,7 @@
     <header class="hero">
       <div>
         <p class="eyebrow">Predictive Modeling AI</p>
-        <h1>Mortgage Risk Ops Console</h1>
+        <h1>Mortgage Risk Demo Console</h1>
       </div>
       <div class="badges">
         <span id="modeBadge" class="badge">Mode: loading</span>
@@ -23,33 +23,14 @@
       </div>
     </header>
 
-    <section class="grid two">
-      <article class="card">
-        <h2>System Snapshot</h2>
-        <pre id="metadataView" class="mono">Loading metadata...</pre>
-      </article>
-      <article class="card">
-        <h2>Monitoring Summary</h2>
-        <pre id="monitoringView" class="mono">Loading monitoring...</pre>
-      </article>
-    </section>
-
     <section class="card">
-      <h2>User Login (Private Modeling)</h2>
-      <form id="authForm" class="stack">
-        <label>Username
-          <input name="username" placeholder="your username" />
-        </label>
-        <label>Password
-          <input name="password" type="password" />
-        </label>
-        <div class="button-row">
-          <button type="button" id="registerBtn">Register</button>
-          <button type="submit">Login</button>
-          <button type="button" id="logoutBtn">Logout</button>
-        </div>
-      </form>
-      <pre id="authView" class="mono">Not logged in. Demo mode still available.</pre>
+      <h2>Run Demo</h2>
+      <ol>
+        <li>Submit <code>seed-demo</code> job.</li>
+        <li>Submit <code>pipeline</code> job.</li>
+        <li>Activate latest model in <strong>Model Lifecycle</strong>.</li>
+        <li>Run <strong>Single Loan Score</strong> and <strong>Forecast</strong>.</li>
+      </ol>
     </section>
 
     <section class="grid two">

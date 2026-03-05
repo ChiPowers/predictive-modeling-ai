@@ -1,22 +1,15 @@
 const pretty = (value) => JSON.stringify(value, null, 2);
-const AUTH_TOKEN_KEY = "pmai_auth_token";
-const AUTH_USER_KEY = "pmai_auth_user";
 const jobPayloadTemplates = {
   "seed-demo": {
     output_dir: "data/raw/fannie_mae/combined",
     filename: "demo_2025Q1.csv",
-    n_loans: 2500,
-    months: 18,
+    n_loans: 250,
+    months: 8,
     seed: 42,
     overwrite: true,
   },
-  train: { model: "sklearn-rf" },
-  pipeline: { source: "fannie-mae", model: "sklearn-rf" },
-  monitor: {
-    reference_path: "data/processed/fannie_mae/features/features.parquet",
-    current_path: "data/processed/fannie_mae/features/current_period.parquet",
-    output_dir: "reports/monitoring",
-  },
+  train: { model: "sklearn-logreg" },
+  pipeline: { source: "fannie-mae", model: "sklearn-logreg" },
 };
 
 async function readJson(response) {
@@ -28,41 +21,21 @@ async function readJson(response) {
   return body;
 }
 
-function authToken() {
-  return localStorage.getItem(AUTH_TOKEN_KEY);
-}
-
-function authHeaders() {
-  const token = authToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 function setOutput(id, data, isError = false) {
   const el = document.getElementById(id);
   el.textContent = typeof data === "string" ? data : pretty(data);
   el.classList.toggle("error", isError);
 }
 
-async function loadSnapshot() {
+async function loadStatus() {
   try {
-    const [health, metadata, monitoring] = await Promise.all([
+    const [health, metadata] = await Promise.all([
       fetch("/health").then(readJson),
       fetch("/metadata").then(readJson),
-      fetch("/monitoring/summary").then(readJson),
     ]);
-
     document.getElementById("healthBadge").textContent = `API: ${health.status}`;
     document.getElementById("modeBadge").textContent = `Mode: ${metadata.mode}`;
-
-    setOutput("metadataView", metadata);
-    setOutput("monitoringView", monitoring.summary_markdown || monitoring);
-    const user = localStorage.getItem(AUTH_USER_KEY);
-    if (user) {
-      setOutput("authView", `Logged in as ${user}`);
-    }
   } catch (error) {
-    setOutput("metadataView", `Failed to load snapshot: ${error.message}`, true);
-    setOutput("monitoringView", "Monitoring unavailable.", true);
     document.getElementById("healthBadge").textContent = "API: error";
   }
 }
@@ -125,8 +98,7 @@ function initBatchForm() {
 
 async function refreshJobs() {
   try {
-    const endpoint = authToken() ? "/me/jobs?limit=20" : "/jobs?limit=20";
-    const payload = await fetch(endpoint, { headers: authHeaders() }).then(readJson);
+    const payload = await fetch("/jobs?limit=20").then(readJson);
     setOutput("jobsView", payload);
   } catch (error) {
     setOutput("jobsView", error.message, true);
@@ -151,10 +123,9 @@ function initJobsForm() {
     try {
       const jobType = typeEl.value;
       const payload = JSON.parse(payloadEl.value);
-      const endpoint = authToken() ? `/me/jobs/${jobType}` : `/jobs/${jobType}`;
-      const created = await fetch(endpoint, {
+      const created = await fetch(`/jobs/${jobType}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }).then(readJson);
       setOutput("jobsView", created);
@@ -170,8 +141,7 @@ function initJobsForm() {
 
 async function refreshModels() {
   try {
-    const endpoint = authToken() ? "/me/models" : "/models";
-    const payload = await fetch(endpoint, { headers: authHeaders() }).then(readJson);
+    const payload = await fetch("/models").then(readJson);
     setOutput("modelsView", payload);
   } catch (error) {
     setOutput("modelsView", error.message, true);
@@ -189,10 +159,9 @@ function initModelForm() {
       const name = form.modelName.value;
       const versionId = form.versionId.value.trim();
       const body = versionId ? { name, version_id: versionId } : { name };
-      const endpoint = authToken() ? "/me/models/activate" : "/models/activate";
-      const payload = await fetch(endpoint, {
+      const payload = await fetch("/models/activate", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       }).then(readJson);
       setOutput("modelsView", payload);
@@ -205,83 +174,13 @@ function initModelForm() {
   refreshModels();
 }
 
-function initAuthForm() {
-  const form = document.getElementById("authForm");
-  const registerBtn = document.getElementById("registerBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  async function setLoggedInUser() {
-    if (!authToken()) {
-      setOutput("authView", "Not logged in. Demo mode still available.");
-      return;
-    }
-    try {
-      const me = await fetch("/auth/me", { headers: authHeaders() }).then(readJson);
-      localStorage.setItem(AUTH_USER_KEY, me.username);
-      setOutput("authView", `Logged in as ${me.username}`);
-    } catch (error) {
-      localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem(AUTH_USER_KEY);
-      setOutput("authView", error.message, true);
-    }
-  }
-
-  registerBtn.addEventListener("click", async () => {
-    try {
-      const payload = await fetch("/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: form.username.value.trim(),
-          password: form.password.value,
-        }),
-      }).then(readJson);
-      setOutput("authView", payload);
-    } catch (error) {
-      setOutput("authView", error.message, true);
-    }
-  });
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    try {
-      const login = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: form.username.value.trim(),
-          password: form.password.value,
-        }),
-      }).then(readJson);
-      localStorage.setItem(AUTH_TOKEN_KEY, login.access_token);
-      localStorage.setItem(AUTH_USER_KEY, login.username);
-      setOutput("authView", `Logged in as ${login.username}`);
-      refreshJobs();
-      refreshModels();
-    } catch (error) {
-      setOutput("authView", error.message, true);
-    }
-  });
-
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem(AUTH_USER_KEY);
-    setOutput("authView", "Logged out. Demo mode active.");
-    refreshJobs();
-    refreshModels();
-  });
-
-  setLoggedInUser();
-}
-
 function bootstrap() {
   initForecastForm();
   initScoreForm();
   initBatchForm();
-  initAuthForm();
   initJobsForm();
   initModelForm();
-  loadSnapshot();
+  loadStatus();
 }
 
 bootstrap();
