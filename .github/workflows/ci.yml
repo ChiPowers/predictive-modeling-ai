@@ -33,4 +33,4 @@ jobs:
         run: ruff check .
 
       - name: Run tests
-        run: pytest -v --cov=. --cov-report=term-missing --cov-omit="tests/*"
+        run: pytest -v
