@@ -31,7 +31,27 @@ In the top cards:
   3. Login.
   4. Subsequent Jobs/Models actions are isolated to your user namespace.
 
-## 3. Build data + train model (first run)
+## 3. Seed demo data (Render / ephemeral deploys)
+
+Use the **Background Jobs** panel:
+
+1. Set **Job Type** = `seed-demo`.
+2. Use payload:
+
+```json
+{
+  "output_dir": "data/raw/fannie_mae/combined",
+  "filename": "demo_2025Q1.csv",
+  "n_loans": 2500,
+  "months": 18,
+  "seed": 42,
+  "overwrite": true
+}
+```
+
+3. Submit and wait for `succeeded`.
+
+## 4. Build data + train model
 
 Use the **Background Jobs** panel:
 
@@ -53,7 +73,7 @@ If it fails with missing raw files, place files here and rerun:
 - `data/raw/fannie_mae/origination/Acquisition_*.txt`
 - `data/raw/fannie_mae/performance/Performance_*.txt`
 
-## 4. Train only (after features exist)
+## 5. Train only (after features exist)
 
 Use **Background Jobs**:
 
@@ -68,7 +88,7 @@ Use **Background Jobs**:
 
 3. Submit and wait for terminal status.
 
-## 5. Activate model for scoring
+## 6. Activate model for scoring
 
 Use **Model Lifecycle** panel:
 
@@ -82,7 +102,7 @@ Expected:
 - Response with `name`, `version_id`, and `current_alias_path`.
 - Scoring service can use `current.joblib`.
 
-## 6. Run scoring from UI
+## 7. Run scoring from UI
 
 ### Single score
 
@@ -100,7 +120,7 @@ Use **Batch Score**:
 2. Submit.
 3. Expect `results[]` and `count`.
 
-## 7. Run forecast
+## 8. Run forecast
 
 Use **Forecast**:
 
@@ -114,7 +134,7 @@ Expected:
 
 If you get artifact-not-found, run a `train` job with model `prophet` first.
 
-## 8. Run monitoring
+## 9. Run monitoring
 
 Use **Background Jobs** with `monitor` payload:
 
@@ -130,7 +150,7 @@ After success:
 
 - **Monitoring Summary** card updates from `reports/monitoring/summary.md`.
 
-## 9. Common failure patterns
+## 10. Common failure patterns
 
 ### Train job fails: feature parquet missing
 
@@ -148,9 +168,10 @@ Activate a model in **Model Lifecycle** and retry.
 
 Run `train` with model `prophet`.
 
-## 10. Quick acceptance checklist
+## 11. Quick acceptance checklist
 
 1. Pipeline job succeeds.
+2. Seed-demo job succeeds (for Render demo environments).
 2. Train job succeeds.
 3. Model activation succeeds.
 4. Single score returns `pd`.

@@ -77,3 +77,20 @@ def test_list_jobs_contains_submitted_job(monkeypatch: pytest.MonkeyPatch, isola
     assert listed.status_code == 200
     jobs = listed.json()["jobs"]
     assert any(j["id"] == job_id for j in jobs)
+
+
+def test_seed_demo_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> None:
+    monkeypatch.setattr(
+        api,
+        "_run_seed_demo_job",
+        lambda req: {"path": "data/raw/fannie_mae/combined/demo_2025Q1.csv", "rows": 1000},
+    )
+    client = TestClient(api.app, raise_server_exceptions=False)
+
+    created = client.post("/jobs/seed-demo", json={})
+    assert created.status_code == 202
+    job_id = created.json()["id"]
+
+    final = _wait_for_terminal(client, job_id)
+    assert final["status"] == "succeeded"
+    assert final["result"]["path"].endswith("demo_2025Q1.csv")

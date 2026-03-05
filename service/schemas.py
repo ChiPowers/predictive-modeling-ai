@@ -99,6 +99,15 @@ class MonitorJobRequest(BaseModel):
     auc_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
 
 
+class SeedDemoJobRequest(BaseModel):
+    output_dir: str = Field(default="data/raw/fannie_mae/combined")
+    filename: str = Field(default="demo_2025Q1.csv")
+    n_loans: int = Field(default=2500, ge=200, le=20000)
+    months: int = Field(default=18, ge=6, le=60)
+    seed: int = Field(default=42)
+    overwrite: bool = Field(default=True)
+
+
 class JobStatusResponse(BaseModel):
     id: str
     job_type: str

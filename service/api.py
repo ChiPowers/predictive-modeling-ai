@@ -35,6 +35,7 @@ from service.schemas import (
     JobListResponse,
     JobStatusResponse,
     MonitorJobRequest,
+    SeedDemoJobRequest,
     ModelCatalogResponse,
     ModelEntryResponse,
     ModelArtifactStatus,
@@ -202,6 +203,19 @@ def _run_monitor_job(req: MonitorJobRequest) -> dict[str, Any]:
     }
 
 
+def _run_seed_demo_job(req: SeedDemoJobRequest) -> dict[str, Any]:
+    from data_ingestion.seed_demo import seed_demo_data
+
+    return seed_demo_data(
+        output_dir=req.output_dir,
+        filename=req.filename,
+        n_loans=req.n_loans,
+        months=req.months,
+        seed=req.seed,
+        overwrite=req.overwrite,
+    )
+
+
 def _extract_predictor(model_obj: Any) -> Any:
     if isinstance(model_obj, dict) and "pipeline" in model_obj:
         return model_obj["pipeline"]
@@ -301,7 +315,7 @@ async def metadata() -> ApiMetadataResponse:
             "train_models": ["prophet", "sklearn-logreg", "sklearn-rf"],
             "forecast_models": ["prophet"],
             "score_endpoints": ["/score", "/batch_score"],
-            "job_endpoints": ["/jobs/train", "/jobs/pipeline", "/jobs/monitor"],
+            "job_endpoints": ["/jobs/seed-demo", "/jobs/train", "/jobs/pipeline", "/jobs/monitor"],
             "model_endpoints": ["/models", "/models/active", "/models/{name}/versions"],
         },
         artifacts=_artifact_statuses(),
@@ -352,6 +366,13 @@ async def submit_monitor_job(req: MonitorJobRequest) -> JobStatusResponse:
     return JobStatusResponse(**job)
 
 
+@app.post("/jobs/seed-demo", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["jobs"])
+async def submit_seed_demo_job(req: SeedDemoJobRequest) -> JobStatusResponse:
+    """Submit a background synthetic data generation job for demo environments."""
+    job = job_manager.submit("seed-demo", req.model_dump(), lambda: _run_seed_demo_job(req))
+    return JobStatusResponse(**job)
+
+
 @app.get("/jobs", response_model=JobListResponse, tags=["jobs"])
 async def list_jobs(limit: int = 50) -> JobListResponse:
     jobs = job_manager.list(limit=limit)
@@ -372,6 +393,20 @@ async def submit_my_train_job(req: TrainJobRequest, username: str = Depends(_req
         "train",
         req.model_dump(),
         lambda: _run_train_job_user(req, username),
+        owner=username,
+    )
+    return JobStatusResponse(**job)
+
+
+@app.post("/me/jobs/seed-demo", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["me"])
+async def submit_my_seed_demo_job(
+    req: SeedDemoJobRequest,
+    username: str = Depends(_require_user),
+) -> JobStatusResponse:
+    job = job_manager.submit(
+        "seed-demo",
+        req.model_dump(),
+        lambda: _run_seed_demo_job(req),
         owner=username,
     )
     return JobStatusResponse(**job)

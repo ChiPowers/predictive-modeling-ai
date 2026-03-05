@@ -2,6 +2,14 @@ const pretty = (value) => JSON.stringify(value, null, 2);
 const AUTH_TOKEN_KEY = "pmai_auth_token";
 const AUTH_USER_KEY = "pmai_auth_user";
 const jobPayloadTemplates = {
+  "seed-demo": {
+    output_dir: "data/raw/fannie_mae/combined",
+    filename: "demo_2025Q1.csv",
+    n_loans: 2500,
+    months: 18,
+    seed: 42,
+    overwrite: true,
+  },
   train: { model: "sklearn-rf" },
   pipeline: { source: "fannie-mae", model: "sklearn-rf" },
   monitor: {
