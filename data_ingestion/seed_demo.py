@@ -16,6 +16,11 @@ def _add_months(mm_yyyy: str, offset: int) -> str:
     return f"{month:02d}{year:04d}"
 
 
+def _to_yyyymm(mm_yyyy: str) -> str:
+    dt = datetime.strptime(mm_yyyy, "%m%Y")
+    return f"{dt.year:04d}{dt.month:02d}"
+
+
 def seed_demo_data(
     *,
     output_dir: str = "data/raw/fannie_mae/combined",
@@ -66,7 +71,7 @@ def seed_demo_data(
         for m in range(months):
             vals = [""] * 110
             vals[1] = loan_id
-            vals[2] = _add_months(start_month, m)
+            vals[2] = _to_yyyymm(_add_months(start_month, m))
             vals[3] = rng.choice(channels)
             vals[4] = rng.choice(sellers)
             vals[5] = vals[4]

@@ -21,4 +21,7 @@ def test_seed_demo_data_creates_combined_file(tmp_path) -> None:
     df = pd.read_csv(path, sep="|", header=None, dtype=str, encoding="latin-1")
     assert len(df) == 120
     assert df.shape[1] >= 100
-
+    # monthly_reporting_period uses YYYYMM so Prophet training can parse it
+    assert df.iloc[0, 2].isdigit()
+    assert len(df.iloc[0, 2]) == 6
+    assert df.iloc[0, 2].startswith("20")
