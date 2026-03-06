@@ -75,6 +75,43 @@ class ModelLoader:
         # Return probability of positive class (default = 1)
         return proba[:, 1]
 
+    def _linear_factors(self, df: pd.DataFrame, n: int) -> list[Factor]:
+        """Compute local factor contributions for linear models (e.g., logreg)."""
+        predictor = self._predictor
+        feature_names = list(df.columns)
+
+        try:
+            if hasattr(predictor, "named_steps") and "clf" in predictor.named_steps:
+                clf = predictor.named_steps["clf"]
+                if not hasattr(clf, "coef_"):
+                    return []
+                # Transform through preprocessing steps, excluding final classifier.
+                transformed = predictor[:-1].transform(df)
+                coefs = np.asarray(clf.coef_)
+                if coefs.ndim == 2:
+                    coefs = coefs[0]
+                row = np.asarray(transformed)[0]
+            elif hasattr(predictor, "coef_"):
+                coefs = np.asarray(predictor.coef_)
+                if coefs.ndim == 2:
+                    coefs = coefs[0]
+                row = pd.to_numeric(df.iloc[0], errors="coerce").fillna(0.0).to_numpy()
+            else:
+                return []
+
+            if len(coefs) != len(row):
+                return []
+
+            contrib = row * coefs
+            ranked = sorted(
+                zip(feature_names, contrib),
+                key=lambda x: abs(float(x[1])),
+                reverse=True,
+            )
+            return [Factor(name=name, value=float(v)) for name, v in ranked[:n]]
+        except Exception:
+            return []
+
     def _top_factors(self, df: pd.DataFrame, n: int = _TOP_N_FACTORS) -> list[Factor]:
         """Return top-n factors ranked by |SHAP value| or feature importance."""
         feature_names = list(df.columns)
@@ -96,6 +133,10 @@ class ModelLoader:
                 return [Factor(name=name, value=float(v)) for name, v in ranked[:n]]
             except Exception:
                 pass  # fall through to feature_importances_
+
+        linear_factors = self._linear_factors(df, n)
+        if linear_factors:
+            return linear_factors
 
         # Fall back to model feature importances (global, not instance-level)
         if hasattr(self._predictor, "feature_importances_"):

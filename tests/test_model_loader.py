@@ -18,8 +18,9 @@ def test_model_loader_supports_wrapped_pipeline_artifact(tmp_path) -> None:
 
     loader = ModelLoader()
     loader.load(tmp_path, "current.joblib")
-    pd_score, decision, _ = loader.score({"credit_score": 690, "orig_ltv": 85}, threshold=0.5)
+    pd_score, decision, factors = loader.score({"credit_score": 690, "orig_ltv": 85}, threshold=0.5)
 
     assert 0.0 <= pd_score <= 1.0
     assert decision in {"current", "default"}
-
+    assert len(factors) > 0
+    assert {f.name for f in factors}.issubset({"credit_score", "orig_ltv"})
