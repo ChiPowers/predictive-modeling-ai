@@ -54,6 +54,8 @@ def seed_demo_data(
 
     rows: list[str] = []
     start_month = "012024"
+    # Guarantee some delinquency signal even in tiny low-memory demo runs.
+    forced_default_loans = max(4, int(round(n_loans * 0.08)))
     for i in range(n_loans):
         loan_id = f"D{2025:04d}{i:08d}"
         orig_upb = rng.randint(120_000, 900_000)
@@ -65,8 +67,13 @@ def seed_demo_data(
         num_borrowers = 1 if rng.random() < 0.35 else 2
         first_pay = start_month
         maturity = _add_months(first_pay, 360)
-        loan_default = rng.random() < 0.03
-        default_start = rng.randint(5, max(6, months - 3)) if loan_default else 9999
+        loan_default = i < forced_default_loans or (rng.random() < 0.06)
+        if loan_default:
+            earliest = 1
+            latest = max(2, months - 2)
+            default_start = rng.randint(earliest, latest)
+        else:
+            default_start = 9999
 
         for m in range(months):
             vals = [""] * 110

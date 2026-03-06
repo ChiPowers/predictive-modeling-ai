@@ -25,3 +25,5 @@ def test_seed_demo_data_creates_combined_file(tmp_path) -> None:
     assert df.iloc[0, 2].isdigit()
     assert len(df.iloc[0, 2]) == 6
     assert df.iloc[0, 2].startswith("20")
+    delinquency = pd.to_numeric(df.iloc[:, 39], errors="coerce").fillna(0)
+    assert (delinquency > 0).any()
