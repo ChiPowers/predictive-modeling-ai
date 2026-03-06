@@ -81,6 +81,75 @@ _LABEL_COL = "default_flag"
 PROPHET_FORECAST_COLS = ["ds", "yhat", "yhat_lower", "yhat_upper"]
 
 
+class DemoTrendForecaster:
+    """Lightweight monthly trend forecaster used when Prophet is unavailable."""
+
+    def __init__(self) -> None:
+        self._start_ds: pd.Timestamp | None = None
+        self._history_ds: pd.Series | None = None
+        self._train_len: int = 0
+        self._coef: float = 0.0
+        self._intercept: float = 0.0
+        self._band: float = 0.01
+
+    def fit(self, ts: pd.DataFrame) -> "DemoTrendForecaster":
+        hist = ts[["ds", "y"]].copy().sort_values("ds").reset_index(drop=True)
+        hist["ds"] = pd.to_datetime(hist["ds"], errors="coerce")
+        hist = hist.dropna(subset=["ds"])
+        y = pd.to_numeric(hist["y"], errors="coerce").fillna(0.0).clip(0.0, 1.0).to_numpy()
+        x = np.arange(len(y), dtype=float)
+        if len(y) >= 2:
+            self._coef, self._intercept = np.polyfit(x, y, 1)
+            resid = y - (self._intercept + self._coef * x)
+            self._band = float(max(np.std(resid), 0.01))
+        elif len(y) == 1:
+            self._coef = 0.0
+            self._intercept = float(y[0])
+            self._band = 0.01
+        else:
+            self._coef = 0.0
+            self._intercept = 0.0
+            self._band = 0.01
+        self._history_ds = hist["ds"]
+        self._start_ds = hist["ds"].iloc[0] if len(hist) else pd.Timestamp("2020-01-01")
+        self._train_len = len(hist)
+        return self
+
+    def make_future_dataframe(
+        self,
+        periods: int,
+        freq: str = "MS",
+        include_history: bool = True,
+    ) -> pd.DataFrame:
+        if self._history_ds is None or len(self._history_ds) == 0:
+            start = pd.Timestamp("2020-01-01")
+            history = pd.Series([start])
+        else:
+            history = self._history_ds
+            start = history.iloc[-1]
+        future = pd.date_range(
+            start=start + pd.offsets.MonthBegin(1),
+            periods=periods,
+            freq=freq,
+        )
+        if include_history:
+            ds = pd.to_datetime(list(history) + list(future))
+        else:
+            ds = pd.to_datetime(list(future))
+        return pd.DataFrame({"ds": ds})
+
+    def predict(self, frame: pd.DataFrame) -> pd.DataFrame:
+        out = frame.copy()
+        ds = pd.to_datetime(out["ds"], errors="coerce")
+        start = self._start_ds or pd.Timestamp("2020-01-01")
+        month_idx = ((ds.dt.year - start.year) * 12 + (ds.dt.month - start.month)).astype(float)
+        yhat = np.clip(self._intercept + self._coef * month_idx, 0.0, 1.0)
+        out["yhat"] = yhat
+        out["yhat_lower"] = np.clip(yhat - self._band, 0.0, 1.0)
+        out["yhat_upper"] = np.clip(yhat + self._band, 0.0, 1.0)
+        return out
+
+
 # ---------------------------------------------------------------------------
 # Public entry-point
 # ---------------------------------------------------------------------------
@@ -218,8 +287,6 @@ def _build_delinquency_ts(perf_df: pd.DataFrame) -> pd.DataFrame:
 
 def _train_prophet(mlflow_run: Any = None, namespace: str | None = None) -> Path:
     """Fit Prophet on aggregate monthly delinquency rate and save artifact."""
-    from prophet import Prophet  # import here to keep training import lightweight
-
     log.info("Loading performance data for Prophet training...")
     perf_df, perf_paths = _load_performance_parquet()
     ts = _build_delinquency_ts(perf_df)
@@ -231,14 +298,27 @@ def _train_prophet(mlflow_run: Any = None, namespace: str | None = None) -> Path
             "Ingest more performance quarters."
         )
 
-    m = Prophet(
-        yearly_seasonality=True,
-        weekly_seasonality=False,
-        daily_seasonality=False,
-        changepoint_prior_scale=0.05,
-        seasonality_prior_scale=10.0,
-    )
-    m.fit(ts)
+    model_impl = "prophet"
+    try:
+        from prophet import Prophet  # import here to keep training import lightweight
+
+        m = Prophet(
+            yearly_seasonality=True,
+            weekly_seasonality=False,
+            daily_seasonality=False,
+            changepoint_prior_scale=0.05,
+            seasonality_prior_scale=10.0,
+        )
+        m.fit(ts)
+    except Exception as exc:
+        if not settings.low_memory_mode:
+            raise
+        log.warning(
+            "Prophet unavailable in low-memory mode; falling back to DemoTrendForecaster: {}",
+            exc,
+        )
+        model_impl = "demo-trend"
+        m = DemoTrendForecaster().fit(ts)
 
     # Quick in-sample diagnostic
     future = m.make_future_dataframe(periods=settings.forecast_horizon, freq="MS")
@@ -252,14 +332,18 @@ def _train_prophet(mlflow_run: Any = None, namespace: str | None = None) -> Path
 
     if mlflow_run is not None:
         mlflow.log_metric("mae", mae)
-        mlflow.sklearn.log_model(
-            sk_model=m,
-            name="model",
-            registered_model_name=settings.mlflow_registered_model_name,
-        )
+        try:
+            mlflow.sklearn.log_model(
+                sk_model=m,
+                name="model",
+                registered_model_name=settings.mlflow_registered_model_name,
+            )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Skipping MLflow model artifact log for forecast model: {}", exc)
 
     lineage_meta: dict[str, Any] = {
         "model_key": "prophet",
+        "model_impl": model_impl,
         "metrics": {"mae": mae},
         "training_data_lineage": _file_lineage(perf_paths),
     }
