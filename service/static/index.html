@@ -28,6 +28,7 @@
       <ol>
         <li>Submit <code>seed-demo</code> job.</li>
         <li>Submit <code>pipeline</code> job.</li>
+        <li>Optional: submit <code>monitor</code> to generate drift reports.</li>
         <li>Activate latest model in <strong>Model Lifecycle</strong>.</li>
         <li>Run <strong>Single Loan Score</strong> and <strong>Forecast</strong>.</li>
       </ol>
@@ -39,14 +40,19 @@
         <label>Job Type
           <select name="jobType">
             <option value="seed-demo">seed-demo</option>
-            <option value="train">train</option>
             <option value="pipeline">pipeline</option>
+            <option value="train">train</option>
             <option value="monitor">monitor</option>
           </select>
         </label>
         <label>Payload JSON
           <textarea name="payload" rows="8">{
-  "model": "sklearn-rf"
+  "output_dir": "data/raw/fannie_mae/combined",
+  "filename": "demo_2025Q1.csv",
+  "n_loans": 120,
+  "months": 6,
+  "seed": 42,
+  "overwrite": true
 }</textarea>
         </label>
         <div class="button-row">
@@ -113,6 +119,7 @@
           </label>
           <button type="submit">Run Forecast</button>
         </form>
+        <h3 class="chart-title">Forecasted PD vs Alert Threshold</h3>
         <div id="forecastChart" class="chart-shell">Run forecast to render chart.</div>
         <p id="forecastSummary" class="chart-summary">No exceedance summary yet.</p>
         <pre id="forecastView" class="mono">No forecast yet.</pre>
@@ -123,7 +130,7 @@
       <h2>Batch Score</h2>
       <form id="batchForm" class="stack">
         <label>Records JSON
-          <textarea name="records" rows="10">[
+          <textarea name="records" rows="14">[
   {
     "features": {
       "credit_score": 700,
@@ -131,6 +138,36 @@
       "orig_dti": 42,
       "orig_upb": 420000,
       "orig_interest_rate": 6.9
+    },
+    "threshold": 0.5
+  },
+  {
+    "features": {
+      "credit_score": 760,
+      "orig_ltv": 72,
+      "orig_dti": 28,
+      "orig_upb": 310000,
+      "orig_interest_rate": 6.1
+    },
+    "threshold": 0.5
+  },
+  {
+    "features": {
+      "credit_score": 640,
+      "orig_ltv": 97,
+      "orig_dti": 49,
+      "orig_upb": 515000,
+      "orig_interest_rate": 7.4
+    },
+    "threshold": 0.5
+  },
+  {
+    "features": {
+      "credit_score": 685,
+      "orig_ltv": 84,
+      "orig_dti": 36,
+      "orig_upb": 390000,
+      "orig_interest_rate": 6.6
     },
     "threshold": 0.5
   }

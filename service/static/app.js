@@ -8,8 +8,15 @@ const jobPayloadTemplates = {
     seed: 42,
     overwrite: true,
   },
-  train: { model: "sklearn-logreg" },
   pipeline: { source: "fannie-mae", model: "sklearn-logreg" },
+  train: { model: "sklearn-logreg" },
+  monitor: {
+    reference_path: "data/processed/fannie_mae/features/features.parquet",
+    current_path: "data/processed/fannie_mae/features/features.parquet",
+    score_ref_col: "orig_ltv",
+    score_cur_col: "orig_ltv",
+    output_dir: "reports/monitoring",
+  },
 };
 
 async function readJson(response) {
@@ -52,12 +59,12 @@ function renderForecastChart(rows, threshold) {
     return;
   }
 
-  const width = 680;
-  const height = 250;
+  const width = 760;
+  const height = 320;
   const left = 48;
   const right = 16;
-  const top = 16;
-  const bottom = 34;
+  const top = 28;
+  const bottom = 40;
   const plotW = width - left - right;
   const plotH = height - top - bottom;
   const xDenom = Math.max(1, parsed.length - 1);
