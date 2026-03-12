@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-ai-narrative-backend-02-PLAN.md
-last_updated: "2026-03-12T20:03:18.181Z"
+stopped_at: "Checkpoint: 01-03 awaiting human verification"
+last_updated: "2026-03-12T20:06:54.643Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 33
 ---
 
@@ -52,6 +52,7 @@ Progress: [███░░░░░░░] 33%
 *Updated after each plan completion*
 | Phase 01-ai-narrative-backend P01 | 3 | 1 tasks | 2 files |
 | Phase 01-ai-narrative-backend P02 | 15 | 2 tasks | 2 files |
+| Phase 01-ai-narrative-backend P03 | 6 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - [Phase 01-ai-narrative-backend]: pd formatted as :.0% not :.1% so prompt token 34% matches test assertion
 - [Phase 01-ai-narrative-backend]: AsyncAnthropic singleton is module-level global using _get_anthropic_client() lazy initializer — not per-request
 - [Phase 01-ai-narrative-backend]: App boots without ANTHROPIC_API_KEY — WARNING logged at startup, 503 only raised on actual Claude API call failure
+- [Phase 01-ai-narrative-backend]: fetchNarrative uses .then() not await so primary result displays immediately while narrative loads async
+- [Phase 01-ai-narrative-backend]: Monitoring Summary section added to index.html — required for monitoringNarrative to have a UI context
+- [Phase 01-ai-narrative-backend]: .narrative CSS class uses existing --accent-soft and --accent variables for visual consistency
 
 ### Pending Todos
 
@@ -82,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T20:03:18.179Z
-Stopped at: Completed 01-ai-narrative-backend-02-PLAN.md
+Last session: 2026-03-12T20:06:49.511Z
+Stopped at: Checkpoint: 01-03 awaiting human verification
 Resume file: None
