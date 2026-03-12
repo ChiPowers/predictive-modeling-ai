@@ -88,6 +88,11 @@
       <article class="card">
         <h2>Single Loan Score</h2>
         <form id="scoreForm" class="stack">
+          <div class="button-row scenario-row">
+            <button type="button" data-scenario="Prime Borrower" class="btn-scenario">Prime Borrower</button>
+            <button type="button" data-scenario="Borderline" class="btn-scenario">Borderline</button>
+            <button type="button" data-scenario="High Risk" class="btn-scenario">High Risk</button>
+          </div>
           <label>Threshold
             <input name="threshold" type="number" min="0" max="1" step="0.01" value="0.5" />
           </label>
@@ -102,7 +107,14 @@
           </label>
           <button type="submit">Score Loan</button>
         </form>
-        <pre id="scoreView" class="mono">No score yet.</pre>
+        <div id="scorePanel" hidden>
+          <div class="score-gauge-wrap">
+            <div id="scoreGauge"></div>
+            <span id="scoreBadge" class="badge"></span>
+          </div>
+          <div id="scoreFactors"></div>
+        </div>
+        <p id="scoreError" class="mono error" hidden></p>
         <p id="scoreNarrative" class="narrative" hidden></p>
       </article>
 
