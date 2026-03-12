@@ -3,8 +3,11 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 import json
+import os
 from pathlib import Path
 from typing import Any, AsyncGenerator
+
+import anthropic
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, status
@@ -32,6 +35,8 @@ from service.schemas import (
     AuthMeResponse,
     AuthRegisterRequest,
     AuthTokenResponse,
+    InterpretRequest,
+    InterpretResponse,
     JobListResponse,
     JobStatusResponse,
     MonitorJobRequest,
@@ -50,6 +55,7 @@ from training.trainer import PROPHET_FORECAST_COLS
 from utils.logging import configure_logging, log
 
 _FORECAST_CACHE: dict[str, Any] = {}
+_ANTHROPIC_CLIENT: anthropic.AsyncAnthropic | None = None
 _MONITORING_DIR = Path("reports/monitoring")
 _MODEL_NAMES = ("prophet", "sklearn-logreg", "sklearn-rf")
 _APP_NAME = "predictive-modeling-ai"
@@ -63,6 +69,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     configure_logging(level=settings.log_level, serialize=settings.log_serialize)
     log.info("API starting up")
     init_db()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        log.warning("ANTHROPIC_API_KEY not set — POST /ai/interpret will return 503 on auth failure")
     try:
         scoring_model.load()
     except FileNotFoundError as exc:
@@ -99,6 +107,14 @@ def _get_forecast_model(model_name: str) -> Any:
     loaded = load_model(model_name)
     _FORECAST_CACHE[model_name] = loaded
     return loaded
+
+
+def _get_anthropic_client() -> anthropic.AsyncAnthropic:
+    global _ANTHROPIC_CLIENT
+    if _ANTHROPIC_CLIENT is None:
+        _ANTHROPIC_CLIENT = anthropic.AsyncAnthropic()
+        # SDK reads ANTHROPIC_API_KEY from environment automatically
+    return _ANTHROPIC_CLIENT
 
 
 def _is_real_data_mode() -> bool:
@@ -215,6 +231,62 @@ def _run_seed_demo_job(req: SeedDemoJobRequest) -> dict[str, Any]:
         seed=req.seed,
         overwrite=req.overwrite,
     )
+
+
+def _build_prompt(context_type: str, data: dict[str, Any]) -> str:
+    if context_type == "score":
+        pd_val = data.get("pd", 0.0)
+        decision = data.get("decision", "unknown")
+        factors = data.get("top_factors", [])
+        if factors:
+            factor_str = ", ".join(
+                f["name"] if isinstance(f, dict) else getattr(f, "name", str(f))
+                for f in factors[:3]
+            )
+            factor_clause = f" Top risk factors: {factor_str}."
+        else:
+            factor_clause = ""
+        return (
+            f"A mortgage loan was scored. Default probability: {pd_val:.0%}. "
+            f"Decision: {decision}.{factor_clause} "
+            "Write a 2-3 sentence plain-language interpretation for a non-technical reader. "
+            "Include a recommended action."
+        )
+    elif context_type == "forecast":
+        forecast_rows = data.get("forecast", [])
+        threshold = data.get("threshold", 0.20)
+        exceed = [r for r in forecast_rows if isinstance(r, dict) and r.get("yhat", 0) >= threshold]
+        first_exceed = exceed[0].get("ds", "unknown") if exceed else None
+        if first_exceed:
+            return (
+                f"A delinquency forecast was run over {len(forecast_rows)} months. "
+                f"The alert threshold is {threshold:.2f}. "
+                f"{len(exceed)} of {len(forecast_rows)} periods breach the threshold. "
+                f"First exceedance: {first_exceed}. "
+                "Write a 2-3 sentence plain-language interpretation with a recommended action."
+            )
+        else:
+            return (
+                f"A delinquency forecast was run over {len(forecast_rows)} months. "
+                f"The alert threshold is {threshold:.2f}. No periods breach the threshold. "
+                "Write a 2-3 sentence plain-language summary confirming the portfolio looks stable."
+            )
+    elif context_type == "monitoring":
+        drift_features = data.get("drift_features") or {}
+        score_drift = data.get("score_drift") or {}
+        perf_drift = data.get("perf_drift") or {}
+        score_alert = score_drift.get("alert", False)
+        auc = perf_drift.get("auc", None)
+        high_drift = [k for k, v in drift_features.items() if isinstance(v, dict) and v.get("psi", 0) > 0.2]
+        auc_clause = f" AUC: {auc:.2f}." if auc is not None else ""
+        alert_clause = " Score distribution alert is active." if score_alert else ""
+        drift_clause = f" High-drift features: {', '.join(high_drift)}." if high_drift else " No features show high drift."
+        return (
+            f"Model monitoring results: {len(drift_features)} features analyzed.{drift_clause}{alert_clause}{auc_clause} "
+            "Write a 2-3 sentence plain-language status summary and state whether retraining is recommended."
+        )
+    else:
+        return f"Interpret the following model output: {data}"
 
 
 def _extract_predictor(model_obj: Any) -> Any:
@@ -595,3 +667,46 @@ def batch_score(request: BatchScoreRequest) -> BatchScoreResponse:
         for pd_score, decision, top_factors in raw_results
     ]
     return BatchScoreResponse(results=results, count=len(results))
+
+
+@app.post("/ai/interpret", response_model=InterpretResponse, tags=["ai"])
+async def ai_interpret(req: InterpretRequest) -> InterpretResponse:
+    """Call Claude to generate a plain-language narrative from model output."""
+    client = _get_anthropic_client()
+    prompt = _build_prompt(req.context_type, req.data)
+    try:
+        message = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=300,
+            system="You are a concise risk analyst writing for non-technical readers. Be direct and specific.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        if message.content and hasattr(message.content[0], "text"):
+            narrative = message.content[0].text
+        else:
+            narrative = "Interpretation unavailable."
+    except anthropic.APIConnectionError as exc:
+        log.error("Claude API connection error: {}", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI narrative unavailable: service unreachable",
+        ) from exc
+    except anthropic.AuthenticationError as exc:
+        log.error("Claude authentication error (check ANTHROPIC_API_KEY): {}", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI narrative unavailable: authentication failed",
+        ) from exc
+    except anthropic.RateLimitError as exc:
+        log.warning("Claude rate limit hit: {}", exc)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="AI narrative unavailable: rate limited",
+        ) from exc
+    except anthropic.APIStatusError as exc:
+        log.error("Claude API error {}: {}", exc.status_code, exc.message)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"AI narrative unavailable: upstream error {exc.status_code}",
+        ) from exc
+    return InterpretResponse(narrative=narrative)
