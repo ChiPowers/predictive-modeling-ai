@@ -1,4 +1,11 @@
 const pretty = (value) => JSON.stringify(value, null, 2);
+
+const SCENARIOS = {
+  'Prime Borrower': { credit_score: 780, orig_ltv: 65, orig_dti: 25, orig_upb: 350000, orig_interest_rate: 6.5 },
+  'Borderline':     { credit_score: 700, orig_ltv: 85, orig_dti: 40, orig_upb: 350000, orig_interest_rate: 6.5 },
+  'High Risk':      { credit_score: 620, orig_ltv: 97, orig_dti: 49, orig_upb: 350000, orig_interest_rate: 7.4 },
+};
+
 const jobPayloadTemplates = {
   "seed-demo": {
     output_dir: "data/raw/fannie_mae/combined",
@@ -124,6 +131,71 @@ function renderForecastChart(rows, threshold) {
   } else {
     summaryEl.textContent = `No points exceed ${threshold.toFixed(2)}.`;
   }
+}
+
+function getRiskTier(pd) {
+  if (pd < 0.25) return { label: 'Low',       cls: 'badge-success' };
+  if (pd < 0.50) return { label: 'Moderate',  cls: 'badge-warning' };
+  if (pd < 0.75) return { label: 'High',      cls: 'badge-danger'  };
+  return               { label: 'Very High',  cls: 'badge-danger'  };
+}
+
+function renderScoreGauge(containerEl, pd) {
+  const r = 70, cx = 100, cy = 90;
+  const circ = Math.PI * r;
+  const safe = Math.min(1, Math.max(0, pd));
+  const dashOffset = circ * (1 - safe);
+  const color = pd < 0.25 ? 'var(--success)' : pd < 0.5 ? 'var(--warning)' : 'var(--danger)';
+  const pct = Math.round(pd * 100);
+  containerEl.innerHTML = `
+    <svg viewBox="0 0 200 100" role="img" aria-label="Risk gauge: ${pct}%">
+      <path d="M ${cx - r},${cy} A ${r},${r} 0 0,1 ${cx + r},${cy}"
+            fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
+      <path d="M ${cx - r},${cy} A ${r},${r} 0 0,1 ${cx + r},${cy}"
+            fill="none" stroke="${color}" stroke-width="14" stroke-linecap="round"
+            stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${dashOffset.toFixed(2)}"/>
+      <text x="${cx}" y="${cy - 12}" text-anchor="middle" fill="var(--ink)"
+            font-size="26" font-weight="700" font-family="inherit">${pct}%</text>
+    </svg>`;
+}
+
+function renderRiskBadge(badgeEl, pd) {
+  const tier = getRiskTier(pd);
+  badgeEl.className = `badge ${tier.cls}`;
+  badgeEl.textContent = tier.label;
+}
+
+function renderFactorBars(containerEl, factors) {
+  if (!factors || factors.length === 0) {
+    containerEl.innerHTML = '<p class="chart-summary">No factor data available.</p>';
+    return;
+  }
+  const maxAbs = Math.max(...factors.map(f => Math.abs(f.value)), 0.001);
+  const rows = factors.map(f => {
+    const pct = (Math.abs(f.value) / maxAbs * 50).toFixed(1);
+    const dir = f.value > 0 ? 'right' : 'left';
+    const cls = f.value > 0 ? 'bar-risk' : 'bar-safe';
+    return `<div class="factor-row">
+      <span class="factor-label">${f.name}</span>
+      <div class="factor-track">
+        <div class="factor-bar ${cls} factor-bar--${dir}" style="width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+  containerEl.innerHTML = `<div class="factor-bars">${rows}</div>`;
+}
+
+function renderScorePanel(payload) {
+  const gaugeEl   = document.getElementById('scoreGauge');
+  const badgeEl   = document.getElementById('scoreBadge');
+  const factorsEl = document.getElementById('scoreFactors');
+  const panelEl   = document.getElementById('scorePanel');
+  const errEl     = document.getElementById('scoreError');
+  renderScoreGauge(gaugeEl, payload.pd);
+  renderRiskBadge(badgeEl, payload.pd);
+  renderFactorBars(factorsEl, payload.top_factors);
+  panelEl.hidden = false;
+  errEl.hidden = true;
 }
 
 async function loadStatus() {
