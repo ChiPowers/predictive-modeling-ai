@@ -103,6 +103,7 @@
           <button type="submit">Score Loan</button>
         </form>
         <pre id="scoreView" class="mono">No score yet.</pre>
+        <p id="scoreNarrative" class="narrative" hidden></p>
       </article>
 
       <article class="card">
@@ -123,7 +124,18 @@
         <div id="forecastChart" class="chart-shell">Run forecast to render chart.</div>
         <p id="forecastSummary" class="chart-summary">No exceedance summary yet.</p>
         <pre id="forecastView" class="mono">No forecast yet.</pre>
+        <p id="forecastNarrative" class="narrative" hidden></p>
       </article>
+    </section>
+
+    <section class="card">
+      <h2>Monitoring Summary</h2>
+      <p class="chart-summary">Latest drift and performance monitoring results.</p>
+      <div class="button-row">
+        <button type="button" id="refreshMonitoringBtn">Refresh Monitoring</button>
+      </div>
+      <pre id="monitoringView" class="mono">Loading monitoring data...</pre>
+      <p id="monitoringNarrative" class="narrative" hidden></p>
     </section>
 
     <section class="card">
