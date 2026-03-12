@@ -43,7 +43,12 @@ Plans:
   1. Scoring a loan shows a color-coded SVG arc gauge (green/yellow/red) and a risk tier badge (Low / Moderate / High / Very High) — no raw JSON visible
   2. Horizontal factor bars appear below the gauge showing which features drove the score up or down, with direction and magnitude readable at a glance
   3. Three scenario buttons (Prime Borrower, Borderline, High Risk) populate the features form with preset values and remain editable before scoring
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Test scaffold, CSS tokens, and HTML structure (containers + scenario buttons, scoreView removed)
+- [ ] 02-02-PLAN.md — JS render functions (gauge, badge, factor bars) and scenario button wiring
+- [ ] 02-03-PLAN.md — Human visual verification checkpoint
 
 ### Phase 3: Demo Flow + Portfolio Dashboard
 **Goal**: A single button runs the entire pipeline end-to-end with visible progress, and batch results appear as a readable portfolio table rather than raw JSON
