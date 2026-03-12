@@ -11,7 +11,7 @@
 - [ ] **AI-02**: User sees a plain-language AI-written interpretation after running a forecast (e.g. "Delinquency rates breach the alert threshold at month 14. Recommend portfolio stress-testing before Q2.")
 - [ ] **AI-03**: User sees a plain-language AI-written monitoring status (e.g. "Feature drift is moderate. AUC is stable at 0.74. No retraining required yet.")
 - [ ] **AI-04**: Backend exposes POST /ai/interpret endpoint that calls Claude API (claude-sonnet-4-6) server-side using ANTHROPIC_API_KEY env var
-- [ ] **AI-05**: anthropic Python package added to project dependencies
+- [x] **AI-05**: anthropic Python package added to project dependencies
 
 ### Risk Visualization
 
@@ -77,7 +77,7 @@
 | AI-02 | Phase 1 | Pending |
 | AI-03 | Phase 1 | Pending |
 | AI-04 | Phase 1 | Pending |
-| AI-05 | Phase 1 | Pending |
+| AI-05 | Phase 1 | Complete |
 | VIZ-01 | Phase 2 | Pending |
 | VIZ-02 | Phase 2 | Pending |
 | VIZ-03 | Phase 2 | Pending |
