@@ -43,6 +43,7 @@ def test_ui_root_serves_html() -> None:
     assert resp.status_code == 200
     assert "text/html" in resp.headers.get("content-type", "")
     assert "Mortgage Risk Model and Scoring - Demo" in resp.text
+    assert 'id="scoreView"' not in resp.text
 
 
 def test_ui_static_css_served() -> None:
