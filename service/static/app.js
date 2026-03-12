@@ -34,6 +34,26 @@ function setOutput(id, data, isError = false) {
   el.classList.toggle("error", isError);
 }
 
+async function fetchNarrative(contextType, data) {
+  try {
+    const result = await fetch("/ai/interpret", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context_type: contextType, data }),
+    }).then(readJson);
+    return result.narrative || null;
+  } catch {
+    return null; // narrative is non-critical — degrade silently
+  }
+}
+
+function setNarrative(id, narrative) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = narrative || "";
+  el.hidden = !narrative;
+}
+
 function renderForecastChart(rows, threshold) {
   const chartEl = document.getElementById("forecastChart");
   const summaryEl = document.getElementById("forecastSummary");
@@ -134,9 +154,13 @@ function initForecastForm() {
       }).then(readJson);
       setOutput("forecastView", payload);
       renderForecastChart(payload.forecast || [], alertThreshold);
+      setNarrative("forecastNarrative", null); // clear previous
+      const forecastData = { forecast: payload.forecast || [], threshold: alertThreshold };
+      fetchNarrative("forecast", forecastData).then((narrative) => setNarrative("forecastNarrative", narrative));
     } catch (error) {
       setOutput("forecastView", error.message, true);
       renderForecastChart([], alertThreshold);
+      setNarrative("forecastNarrative", null);
     }
   });
 }
@@ -154,8 +178,11 @@ function initScoreForm() {
         body: JSON.stringify({ features, threshold }),
       }).then(readJson);
       setOutput("scoreView", payload);
+      setNarrative("scoreNarrative", null); // clear previous
+      fetchNarrative("score", payload).then((narrative) => setNarrative("scoreNarrative", narrative));
     } catch (error) {
       setOutput("scoreView", error.message, true);
+      setNarrative("scoreNarrative", null);
     }
   });
 }
@@ -256,12 +283,35 @@ function initModelForm() {
   refreshModels();
 }
 
+async function loadMonitoring() {
+  try {
+    const monitoringPayload = await fetch("/monitoring/summary").then(readJson);
+    setOutput("monitoringView", monitoringPayload);
+    setNarrative("monitoringNarrative", null); // clear previous
+    if (monitoringPayload.available) {
+      fetchNarrative("monitoring", monitoringPayload).then((narrative) => setNarrative("monitoringNarrative", narrative));
+    }
+  } catch (error) {
+    setOutput("monitoringView", error.message, true);
+    setNarrative("monitoringNarrative", null);
+  }
+}
+
+function initMonitoringSection() {
+  const refreshBtn = document.getElementById("refreshMonitoringBtn");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", loadMonitoring);
+  }
+  loadMonitoring();
+}
+
 function bootstrap() {
   initForecastForm();
   initScoreForm();
   initBatchForm();
   initJobsForm();
   initModelForm();
+  initMonitoringSection();
   loadStatus();
 }
 
