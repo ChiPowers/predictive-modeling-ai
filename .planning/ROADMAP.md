@@ -28,7 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. After running a forecast, a plain-language paragraph appears describing when delinquency breaches the alert threshold and what to do
   3. After loading monitoring data, a plain-language paragraph appears summarizing drift status and whether retraining is needed
   4. POST /ai/interpret accepts model output JSON, calls Claude claude-sonnet-4-6 server-side, and returns narrative text — the ANTHROPIC_API_KEY is never exposed to the browser
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Add anthropic dependency and create test scaffold (Wave 1)
+- [ ] 01-02-PLAN.md — Implement POST /ai/interpret endpoint with schemas, AsyncAnthropic, prompt builders, error handling (Wave 2)
+- [ ] 01-03-PLAN.md — Wire narrative into frontend: fetchNarrative() in app.js, narrative <p> elements in index.html (Wave 3)
 
 ### Phase 2: Score Panel Redesign
 **Goal**: The single-loan score panel communicates risk visually and lets visitors explore pre-built loan scenarios without hand-editing JSON
@@ -68,7 +73,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. AI Narrative Backend | 0/TBD | Not started | - |
+| 1. AI Narrative Backend | 0/3 | Not started | - |
 | 2. Score Panel Redesign | 0/TBD | Not started | - |
 | 3. Demo Flow + Portfolio Dashboard | 0/TBD | Not started | - |
 | 4. Monitoring Panel | 0/TBD | Not started | - |
