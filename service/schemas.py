@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -176,3 +176,12 @@ class AuthTokenResponse(BaseModel):
 
 class AuthMeResponse(BaseModel):
     username: str
+
+
+class InterpretRequest(BaseModel):
+    context_type: Literal["score", "forecast", "monitoring"]
+    data: dict[str, Any] = Field(description="Raw model output to interpret")
+
+
+class InterpretResponse(BaseModel):
+    narrative: str = Field(description="Plain-language AI interpretation")
