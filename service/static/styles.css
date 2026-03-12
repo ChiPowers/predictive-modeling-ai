@@ -7,6 +7,8 @@
   --danger: #b42318;
   --line: #d9d2c4;
   --shadow: 0 14px 40px rgba(18, 28, 36, 0.12);
+  --success: #1a7f37;
+  --warning: #9a6700;
 }
 
 * {
@@ -74,6 +76,10 @@ body {
   border-radius: 999px;
   font-size: 0.8rem;
 }
+
+.badge-success { background: #d3f4df; border: 1px solid #9ee6b5; color: #1a7f37; }
+.badge-warning { background: #fef3c7; border: 1px solid #fcd34d; color: #9a6700; }
+.badge-danger  { background: #fde8e8; border: 1px solid #fca5a5; color: var(--danger); }
 
 .grid {
   display: grid;
@@ -220,3 +226,53 @@ button:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Score panel — Phase 2 */
+.score-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#scoreGauge svg {
+  width: 200px;
+  transition: stroke-dashoffset 300ms ease-out;
+}
+
+.factor-bars { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.factor-row { display: flex; align-items: center; gap: 8px; }
+.factor-label { font-size: 0.8rem; width: 120px; text-align: right; color: var(--ink); flex-shrink: 0; }
+.factor-track {
+  flex: 1;
+  height: 14px;
+  background: transparent;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.factor-track::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+.factor-bar { height: 10px; border-radius: 3px; position: absolute; }
+.factor-bar--right { left: 50%; background: var(--danger); }
+.factor-bar--left  { right: 50%; background: var(--success); }
+
+/* Scenario buttons */
+.scenario-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.btn-scenario {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn-scenario:hover { border-color: var(--accent); color: var(--accent); }
