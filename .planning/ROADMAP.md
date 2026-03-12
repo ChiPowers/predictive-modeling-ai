@@ -13,7 +13,7 @@ This milestone transforms an existing developer-facing ML dashboard into a narra
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: AI Narrative Backend** - Add /ai/interpret endpoint calling Claude API server-side; wire AI responses into score, forecast, and monitoring flows (completed 2026-03-12)
-- [ ] **Phase 2: Score Panel Redesign** - Replace raw JSON score output with risk gauge, factor bars, risk badge, and pre-built loan scenario buttons
+- [x] **Phase 2: Score Panel Redesign** - Replace raw JSON score output with risk gauge, factor bars, risk badge, and pre-built loan scenario buttons (completed 2026-03-12)
 - [ ] **Phase 3: Demo Flow + Portfolio Dashboard** - Replace 5-step instruction list with one-click animated demo; add sortable batch portfolio table with distribution chart and AI insight
 - [ ] **Phase 4: Monitoring Panel** - Add Model Health section with per-feature drift indicators, AUC trend, and AI-written status summary
 
@@ -79,6 +79,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. AI Narrative Backend | 3/3 | Complete   | 2026-03-12 |
-| 2. Score Panel Redesign | 1/3 | In Progress|  |
+| 2. Score Panel Redesign | 3/3 | Complete   | 2026-03-12 |
 | 3. Demo Flow + Portfolio Dashboard | 0/TBD | Not started | - |
 | 4. Monitoring Panel | 0/TBD | Not started | - |

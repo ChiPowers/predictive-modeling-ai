@@ -15,10 +15,10 @@
 
 ### Risk Visualization
 
-- [ ] **VIZ-01**: Single loan score displays a risk gauge (SVG arc, green→yellow→red) showing PD score value
-- [ ] **VIZ-02**: Single loan score displays factor contribution bars (horizontal bars, magnitude + direction) for top_factors from API response
-- [ ] **VIZ-03**: Single loan score displays a risk tier badge (Low / Moderate / High / Very High) derived from PD threshold
-- [ ] **VIZ-04**: Raw JSON score output is replaced by the visual components (gauge + bars + badge + AI narrative)
+- [x] **VIZ-01**: Single loan score displays a risk gauge (SVG arc, green→yellow→red) showing PD score value
+- [x] **VIZ-02**: Single loan score displays factor contribution bars (horizontal bars, magnitude + direction) for top_factors from API response
+- [x] **VIZ-03**: Single loan score displays a risk tier badge (Low / Moderate / High / Very High) derived from PD threshold
+- [x] **VIZ-04**: Raw JSON score output is replaced by the visual components (gauge + bars + badge + AI narrative)
 
 ### Demo Flow
 
@@ -35,9 +35,9 @@
 
 ### Loan Scenarios
 
-- [ ] **SCEN-01**: Score panel has three pre-built scenario buttons: "Prime Borrower", "Borderline", "High Risk"
-- [ ] **SCEN-02**: Clicking a scenario populates the features form with preset values (Prime: credit 780/LTV 65/DTI 25; Borderline: credit 700/LTV 85/DTI 40; High Risk: credit 620/LTV 97/DTI 49)
-- [ ] **SCEN-03**: JSON editor remains editable after scenario population (scenarios are starting points, not locked)
+- [x] **SCEN-01**: Score panel has three pre-built scenario buttons: "Prime Borrower", "Borderline", "High Risk"
+- [x] **SCEN-02**: Clicking a scenario populates the features form with preset values (Prime: credit 780/LTV 65/DTI 25; Borderline: credit 700/LTV 85/DTI 40; High Risk: credit 620/LTV 97/DTI 49)
+- [x] **SCEN-03**: JSON editor remains editable after scenario population (scenarios are starting points, not locked)
 
 ### Monitoring Panel
 
@@ -78,13 +78,13 @@
 | AI-03 | Phase 1 | Complete |
 | AI-04 | Phase 1 | Complete |
 | AI-05 | Phase 1 | Complete |
-| VIZ-01 | Phase 2 | Pending |
-| VIZ-02 | Phase 2 | Pending |
-| VIZ-03 | Phase 2 | Pending |
-| VIZ-04 | Phase 2 | Pending |
-| SCEN-01 | Phase 2 | Pending |
-| SCEN-02 | Phase 2 | Pending |
-| SCEN-03 | Phase 2 | Pending |
+| VIZ-01 | Phase 2 | Complete |
+| VIZ-02 | Phase 2 | Complete |
+| VIZ-03 | Phase 2 | Complete |
+| VIZ-04 | Phase 2 | Complete |
+| SCEN-01 | Phase 2 | Complete |
+| SCEN-02 | Phase 2 | Complete |
+| SCEN-03 | Phase 2 | Complete |
 | DEMO-01 | Phase 3 | Pending |
 | DEMO-02 | Phase 3 | Pending |
 | DEMO-03 | Phase 3 | Pending |
