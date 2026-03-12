@@ -38,6 +38,8 @@ dependencies = [
     "loguru==0.7.2",
     # HTTP (dataset download)
     "httpx==0.27.0",
+    # AI narrative generation
+    "anthropic>=0.84",
     # Schema validation
     "pandera==0.20.3",
     # YAML config
