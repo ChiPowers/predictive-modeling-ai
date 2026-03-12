@@ -239,6 +239,13 @@ function initForecastForm() {
 
 function initScoreForm() {
   const form = document.getElementById("scoreForm");
+
+  form.querySelectorAll('[data-scenario]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      form.features.value = pretty(SCENARIOS[btn.dataset.scenario]);
+    });
+  });
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
@@ -249,11 +256,14 @@ function initScoreForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ features, threshold }),
       }).then(readJson);
-      setOutput("scoreView", payload);
+      renderScorePanel(payload);
       setNarrative("scoreNarrative", null); // clear previous
       fetchNarrative("score", payload).then((narrative) => setNarrative("scoreNarrative", narrative));
     } catch (error) {
-      setOutput("scoreView", error.message, true);
+      document.getElementById('scorePanel').hidden = true;
+      const scoreErrEl = document.getElementById('scoreError');
+      scoreErrEl.textContent = error.message;
+      scoreErrEl.hidden = false;
       setNarrative("scoreNarrative", null);
     }
   });
