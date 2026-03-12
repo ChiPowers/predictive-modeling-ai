@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-ai-narrative-backend-01-PLAN.md
-last_updated: "2026-03-12T19:58:28.804Z"
+stopped_at: Completed 01-ai-narrative-backend-02-PLAN.md
+last_updated: "2026-03-12T20:03:18.181Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 33
 ---
 
@@ -51,6 +51,7 @@ Progress: [███░░░░░░░] 33%
 
 *Updated after each plan completion*
 | Phase 01-ai-narrative-backend P01 | 3 | 1 tasks | 2 files |
+| Phase 01-ai-narrative-backend P02 | 15 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - Initialization: ANTHROPIC_API_KEY via env var — never exposed to frontend
 - [Phase 01-ai-narrative-backend]: Used patch(create=True) in mock fixture so AI tests can be written before _get_anthropic_client exists in service.api
 - [Phase 01-ai-narrative-backend]: Prompt content assertions use loose matching (any() over plausible tokens) to avoid formatting brittleness
+- [Phase 01-ai-narrative-backend]: pd formatted as :.0% not :.1% so prompt token 34% matches test assertion
+- [Phase 01-ai-narrative-backend]: AsyncAnthropic singleton is module-level global using _get_anthropic_client() lazy initializer — not per-request
+- [Phase 01-ai-narrative-backend]: App boots without ANTHROPIC_API_KEY — WARNING logged at startup, 503 only raised on actual Claude API call failure
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T19:58:28.802Z
-Stopped at: Completed 01-ai-narrative-backend-01-PLAN.md
+Last session: 2026-03-12T20:03:18.179Z
+Stopped at: Completed 01-ai-narrative-backend-02-PLAN.md
 Resume file: None
