@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: "Completed 03-04-PLAN.md — portfolio dashboard: renderPortfolioTable, renderDonutChart, initBatchForm update"
-last_updated: "2026-03-13T03:19:58.528Z"
+stopped_at: "Checkpoint 03-05 — awaiting human visual verification at http://localhost:8000"
+last_updated: "2026-03-13T03:22:54.493Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 33
 ---
 
@@ -61,6 +61,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 03-demo-flow-portfolio-dashboard P02 | 15 | 2 tasks | 3 files |
 | Phase 03-demo-flow-portfolio-dashboard P03 | 7 | 2 tasks | 1 files |
 | Phase 03-demo-flow-portfolio-dashboard P04 | 3 | 2 tasks | 1 files |
+| Phase 03-demo-flow-portfolio-dashboard P05 | 1 | 0 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,7 @@ Recent decisions affecting current work:
 - [Phase 03-demo-flow-portfolio-dashboard]: portfolioSort is module-level so sort state persists across header-click re-renders
 - [Phase 03-demo-flow-portfolio-dashboard]: Degenerate single-tier donut uses SVG circle not arc path to avoid 360-degree edge case
 - [Phase 03-demo-flow-portfolio-dashboard]: Tier colors use inline hex fills in SVG for cross-browser fill attribute compatibility
+- [Phase 03-demo-flow-portfolio-dashboard]: Human verification required for CSS animations, JS timing, SVG rendering, and auto-scroll — cannot be tested by pytest
 
 ### Pending Todos
 
@@ -109,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T03:19:58.526Z
-Stopped at: Completed 03-04-PLAN.md — portfolio dashboard: renderPortfolioTable, renderDonutChart, initBatchForm update
+Last session: 2026-03-13T03:22:54.490Z
+Stopped at: Checkpoint 03-05 — awaiting human visual verification at http://localhost:8000
 Resume file: None
