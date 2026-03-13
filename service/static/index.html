@@ -24,7 +24,7 @@
     </header>
 
     <section class="card" id="demoCard">
-      <h2>Run Demo</h2>
+      <h2>Run Demo <span class="tip" data-tip="Runs the full end-to-end pipeline: seeds synthetic Fannie Mae loan data, trains a risk model, activates it, scores a sample loan, and generates a 24-month default forecast.">?</span></h2>
       <div class="button-row">
         <button type="button" id="runDemoBtn">Run Full Demo</button>
       </div>
@@ -54,7 +54,7 @@
     </section>
 
     <section class="card">
-      <h2>Background Jobs</h2>
+      <h2>Background Jobs <span class="tip" data-tip="Async server-side jobs for data seeding, model training, and monitoring. Submit a job and watch its status update automatically every 4 seconds.">?</span></h2>
       <form id="jobForm" class="stack" hidden>
         <label>Job Type
           <select name="jobType">
@@ -79,11 +79,11 @@
           <button type="button" id="refreshJobsBtn">Refresh Jobs</button>
         </div>
       </form>
-      <pre id="jobsView" class="mono">No jobs yet.</pre>
+      <div id="jobsView"><p class="chart-summary">No jobs yet.</p></div>
     </section>
 
     <section class="card">
-      <h2>Model Lifecycle</h2>
+      <h2>Model Lifecycle <span class="tip" data-tip="Manage trained model versions. Activate a specific model to make it the one used for all scoring and forecasting requests.">?</span></h2>
       <form id="modelForm" class="stack">
         <label>Model Name
           <select name="modelName">
@@ -100,12 +100,12 @@
           <button type="button" id="refreshModelsBtn">Refresh Models</button>
         </div>
       </form>
-      <pre id="modelsView" class="mono">No model catalog loaded yet.</pre>
+      <div id="modelsView"><p class="chart-summary">No model catalog loaded yet.</p></div>
     </section>
 
     <section class="grid two">
       <article class="card">
-        <h2>Single Loan Score</h2>
+        <h2>Single Loan Score <span class="tip" data-tip="Score one mortgage loan's probability of default (PD). Adjust features or pick a scenario to see how credit score, LTV, and DTI shift the risk decision.">?</span></h2>
         <form id="scoreForm" class="stack">
           <div class="button-row scenario-row">
             <button type="button" data-scenario="Prime Borrower" class="btn-scenario">Prime Borrower</button>
@@ -138,7 +138,7 @@
       </article>
 
       <article class="card">
-        <h2>Forecast</h2>
+        <h2>Forecast <span class="tip" data-tip="Projects portfolio-level default probability over a future time horizon using a Prophet time-series model. Points above the alert threshold are flagged as exceedances.">?</span></h2>
         <form id="forecastForm" class="stack">
           <label>Source
             <input name="source" value="fannie-mae" />
@@ -154,13 +154,12 @@
         <h3 class="chart-title">Forecasted PD vs Alert Threshold</h3>
         <div id="forecastChart" class="chart-shell">Run forecast to render chart.</div>
         <p id="forecastSummary" class="chart-summary">No exceedance summary yet.</p>
-        <pre id="forecastView" class="mono">No forecast yet.</pre>
         <p id="forecastNarrative" class="narrative" hidden></p>
       </article>
     </section>
 
     <section class="card">
-      <h2>Monitoring Summary</h2>
+      <h2>Monitoring Summary <span class="tip" data-tip="Tracks model health between retraining cycles — feature drift (PSI), AUC performance trend, and an AI-written plain-language status summary.">?</span></h2>
       <p class="chart-summary">Latest drift and performance monitoring results.</p>
       <div class="button-row">
         <button type="button" id="refreshMonitoringBtn">Refresh Monitoring</button>
@@ -171,7 +170,7 @@
     </section>
 
     <section class="card">
-      <h2>Batch Score</h2>
+      <h2>Batch Score <span class="tip" data-tip="Score a full portfolio of loans in one request. Results appear as a sortable risk table and a donut chart showing the current vs. default split.">?</span></h2>
       <form id="batchForm" class="stack">
         <label>Records JSON
           <textarea name="records" rows="14">[

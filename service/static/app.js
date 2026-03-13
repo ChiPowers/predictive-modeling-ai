@@ -224,13 +224,14 @@ function initForecastForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source, model: "prophet", horizon }),
       }).then(readJson);
-      setOutput("forecastView", payload);
       renderForecastChart(payload.forecast || [], alertThreshold);
       setNarrative("forecastNarrative", null); // clear previous
       const forecastData = { forecast: payload.forecast || [], threshold: alertThreshold };
       fetchNarrative("forecast", forecastData).then((narrative) => setNarrative("forecastNarrative", narrative));
     } catch (error) {
-      setOutput("forecastView", error.message, true);
+      const summaryEl = document.getElementById("forecastSummary");
+      summaryEl.textContent = `Error: ${error.message}`;
+      summaryEl.classList.add("error");
       renderForecastChart([], alertThreshold);
       setNarrative("forecastNarrative", null);
     }
@@ -293,12 +294,60 @@ function initBatchForm() {
   });
 }
 
+function renderJobs(el, payload) {
+  const jobs = Array.isArray(payload.jobs) ? payload.jobs : (payload.id ? [payload] : []);
+  if (!jobs.length) {
+    el.innerHTML = '<p class="chart-summary">No jobs yet.</p>';
+    return;
+  }
+  const statusCls = s => s === 'complete' ? 'badge-success' : s === 'running' ? 'badge-warning' : s === 'failed' ? 'badge-danger' : '';
+  const fmt = iso => iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
+  const dur = j => {
+    if (!j.started_at) return '—';
+    const s = Math.round((new Date(j.finished_at || Date.now()) - new Date(j.started_at)) / 1000);
+    return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+  };
+  el.innerHTML = `<table class="data-table">
+    <thead><tr><th>Type</th><th>Status</th><th>Started</th><th>Duration</th></tr></thead>
+    <tbody>${jobs.map(j => `<tr>
+      <td>${j.job_type}</td>
+      <td><span class="badge ${statusCls(j.status)}">${j.status}</span></td>
+      <td>${fmt(j.started_at || j.created_at)}</td>
+      <td>${dur(j)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderModels(el, payload) {
+  if (!payload || (!payload.models && !payload.version_id)) {
+    el.innerHTML = '<p class="chart-summary">No model catalog loaded yet.</p>';
+    return;
+  }
+  // ActiveModelResponse from POST /models/activate — show inline then refreshModels() fills catalog
+  if (payload.version_id && !payload.models) {
+    el.innerHTML = `<p class="chart-summary"><span class="badge badge-success">Activated</span> ${payload.name} — <code>${payload.version_id.slice(0, 8)}</code></p>`;
+    return;
+  }
+  const { models = [], active = null } = payload;
+  el.innerHTML = `
+    ${active ? `<p class="chart-summary" style="margin-bottom:8px"><span class="badge badge-success">Active</span> ${active.name} — <code>${active.version_id?.slice(0, 8) ?? '—'}</code></p>` : ''}
+    <table class="data-table">
+      <thead><tr><th>Model</th><th>Versions</th><th>Latest ID</th></tr></thead>
+      <tbody>${models.map(m => `<tr>
+        <td>${m.name}${active?.name === m.name ? ' <span class="badge badge-success" style="font-size:0.7rem;padding:1px 6px;margin-left:4px">active</span>' : ''}</td>
+        <td>${m.version_count}</td>
+        <td><code>${m.latest_version_id?.slice(0, 8) ?? '—'}</code></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+}
+
 async function refreshJobs() {
+  const el = document.getElementById("jobsView");
   try {
     const payload = await fetch("/jobs?limit=20").then(readJson);
-    setOutput("jobsView", payload);
+    renderJobs(el, payload);
   } catch (error) {
-    setOutput("jobsView", error.message, true);
+    el.innerHTML = `<p class="chart-summary error">${error.message}</p>`;
   }
 }
 
@@ -325,10 +374,9 @@ function initJobsForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       }).then(readJson);
-      setOutput("jobsView", created);
       refreshJobs();
     } catch (error) {
-      setOutput("jobsView", error.message, true);
+      document.getElementById("jobsView").innerHTML = `<p class="chart-summary error">${error.message}</p>`;
     }
   });
 
@@ -337,11 +385,12 @@ function initJobsForm() {
 }
 
 async function refreshModels() {
+  const el = document.getElementById("modelsView");
   try {
     const payload = await fetch("/models").then(readJson);
-    setOutput("modelsView", payload);
+    renderModels(el, payload);
   } catch (error) {
-    setOutput("modelsView", error.message, true);
+    el.innerHTML = `<p class="chart-summary error">${error.message}</p>`;
   }
 }
 
@@ -361,10 +410,10 @@ function initModelForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       }).then(readJson);
-      setOutput("modelsView", payload);
+      renderModels(document.getElementById("modelsView"), payload);
       refreshModels();
     } catch (error) {
-      setOutput("modelsView", error.message, true);
+      document.getElementById("modelsView").innerHTML = `<p class="chart-summary error">${error.message}</p>`;
     }
   });
 
