@@ -15,7 +15,7 @@ from features.labels import build_labels
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_df(records: list[tuple]) -> pd.DataFrame:
+def _make_df(records: list[tuple[str, str, int]]) -> pd.DataFrame:
     """Build a minimal loan-month panel from (loan_id, reporting_month, dpd) tuples."""
     return pd.DataFrame(records, columns=["loan_id", "reporting_month", "dpd"])
 

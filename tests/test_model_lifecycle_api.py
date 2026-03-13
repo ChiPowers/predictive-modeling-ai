@@ -26,7 +26,7 @@ def test_models_catalog_and_activate_flow(
     def _fake_load(path: Path | None = None, filename: str | None = None) -> None:
         calls.append((str(path), str(filename)))
 
-    monkeypatch.setattr(api.scoring_model, "load", _fake_load)
+    monkeypatch.setattr(api.scoring_model, "load", _fake_load)  # type: ignore[attr-defined]
 
     model = LinearRegression().fit([[1], [2]], [2.0, 4.0])
     registry.save(model, "lr")

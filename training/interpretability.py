@@ -14,8 +14,8 @@ FIGURES_DIR = Path("reports") / "figures"
 
 def explain(
     model: Any,
-    X_background: pd.DataFrame | np.ndarray,
-    X_explain: pd.DataFrame | np.ndarray,
+    X_background: pd.DataFrame | np.ndarray[Any, np.dtype[Any]],
+    X_explain: pd.DataFrame | np.ndarray[Any, np.dtype[Any]],
     *,
     feature_names: list[str] | None = None,
     max_display: int = 20,
@@ -82,7 +82,7 @@ def explain(
 # Private helpers
 # ---------------------------------------------------------------------------
 
-def _build_explainer(model: Any, X_bg: np.ndarray) -> Any:
+def _build_explainer(model: Any, X_bg: np.ndarray[Any, np.dtype[Any]]) -> Any:
     """Return a SHAP explainer, preferring TreeExplainer."""
     import shap
 
@@ -110,15 +110,15 @@ def _unwrap(model: Any) -> Any:
     return model
 
 
-def _to_array(X: pd.DataFrame | np.ndarray) -> np.ndarray:
+def _to_array(X: pd.DataFrame | np.ndarray[Any, np.dtype[Any]]) -> np.ndarray[Any, np.dtype[Any]]:
     if isinstance(X, pd.DataFrame):
-        return X.to_numpy()
+        return X.to_numpy()  # type: ignore[no-any-return]
     return np.asarray(X)
 
 
 def _save_summary(
     sv: Any,
-    X: np.ndarray,
+    X: np.ndarray[Any, np.dtype[Any]],
     feature_names: list[str] | None,
     max_display: int,
 ) -> None:

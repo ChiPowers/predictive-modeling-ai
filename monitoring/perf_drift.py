@@ -131,10 +131,11 @@ def run_perf_drift(
     latest_auc: float | None = float(valid_aucs.iloc[-1]) if len(valid_aucs) else None
 
     if len(valid_aucs) >= 2:
-        slope: float | None = float(
+        _slope_val = float(
             np.polyfit(range(len(valid_aucs)), valid_aucs.to_numpy(dtype=float), 1)[0]
         )
-        trend = "improving" if slope > 0 else "degrading"
+        slope: float | None = _slope_val
+        trend = "improving" if _slope_val > 0 else "degrading"
     else:
         slope = None
         trend = "insufficient_data"

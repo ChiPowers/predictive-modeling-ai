@@ -26,6 +26,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 import yaml
@@ -45,9 +46,9 @@ from utils.logging import log
 _CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "data_paths.yaml"
 
 
-def _load_config() -> dict:
+def _load_config() -> dict[str, Any]:
     with open(_CONFIG_PATH) as fh:
-        return yaml.safe_load(fh)["fannie_mae"]
+        return cast(dict[str, Any], yaml.safe_load(fh)["fannie_mae"])
 
 
 # ---------------------------------------------------------------------------
@@ -129,11 +130,11 @@ def _extract_by_index(raw: pd.DataFrame, columns: list[str], idx_map: dict[str, 
 def _read_raw_chunk(
     path: Path,
     columns: list[str],
-    cfg: dict,
+    cfg: dict[str, Any],
     chunksize: int | None = None,
 ) -> pd.DataFrame | Iterator[pd.DataFrame]:
     """Read a pipe-delimited Fannie Mae file with no header."""
-    kwargs: dict = dict(
+    kwargs: dict[str, Any] = dict(
         sep=cfg["delimiter"],
         header=None,
         names=columns,
@@ -143,7 +144,7 @@ def _read_raw_chunk(
     )
     if chunksize:
         kwargs["chunksize"] = chunksize
-    return pd.read_csv(path, **kwargs)  # type: ignore[return-value]
+    return pd.read_csv(path, **kwargs)
 
 
 def _normalize_blanks(df: pd.DataFrame) -> pd.DataFrame:
@@ -151,7 +152,7 @@ def _normalize_blanks(df: pd.DataFrame) -> pd.DataFrame:
     return df.replace(r"^\s*$", pd.NA, regex=True)
 
 
-def _validate(df: pd.DataFrame, schema, file_label: str) -> pd.DataFrame:
+def _validate(df: pd.DataFrame, schema: Any, file_label: str) -> pd.DataFrame:
     """Run pandera validation and return the (possibly coerced) DataFrame."""
     try:
         validated = schema.validate(df, lazy=True)
@@ -301,7 +302,7 @@ def ingest_performance(
         chunks: list[pd.DataFrame] = []
         reader = _read_raw_chunk(src, PERFORMANCE_COLUMNS, cfg, chunksize=chunk_size)
 
-        for i, chunk in enumerate(reader):  # type: ignore[union-attr]
+        for i, chunk in enumerate(reader):
             assert isinstance(chunk, pd.DataFrame)
             chunk = _normalize_blanks(chunk)
             if validate:

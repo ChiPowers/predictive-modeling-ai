@@ -40,11 +40,11 @@ PSI_ALERT = 0.25
 KS_ALPHA = 0.05
 
 
-def _equal_freq_edges(reference: np.ndarray, n_bins: int) -> np.ndarray:
+def _equal_freq_edges(reference: np.ndarray[Any, np.dtype[Any]], n_bins: int) -> np.ndarray[Any, np.dtype[Any]]:
     """Return bin edges derived from reference-distribution quantiles."""
     percentiles = np.linspace(0, 100, n_bins + 1)
     edges = np.nanpercentile(reference, percentiles)
-    return np.unique(edges)  # collapse duplicate edges for near-constant cols
+    return np.unique(edges)  # type: ignore[no-any-return]  # collapse duplicate edges for near-constant cols
 
 
 def psi(reference: pd.Series, current: pd.Series, n_bins: int = 10) -> float:

@@ -4,12 +4,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 import service.api as api
 
 
-def test_metadata_contract(monkeypatch) -> None:
+def test_metadata_contract(monkeypatch: pytest.MonkeyPatch) -> None:
     """GET /metadata returns a stable contract payload for the frontend."""
     monkeypatch.setattr(api, "_is_real_data_mode", lambda: False)
     client = TestClient(api.app, raise_server_exceptions=False)
@@ -25,9 +26,9 @@ def test_metadata_contract(monkeypatch) -> None:
     assert names == {"prophet", "sklearn-logreg", "sklearn-rf"}
 
 
-def test_ready_returns_not_ready_when_model_unloaded(monkeypatch) -> None:
+def test_ready_returns_not_ready_when_model_unloaded(monkeypatch: pytest.MonkeyPatch) -> None:
     """GET /ready returns 503 until scoring model is loaded."""
-    monkeypatch.setattr(type(api.scoring_model), "is_loaded", property(lambda self: False))
+    monkeypatch.setattr(type(api.scoring_model), "is_loaded", property(lambda self: False))  # type: ignore[attr-defined]
     client = TestClient(api.app, raise_server_exceptions=False)
     resp = client.get("/ready")
     assert resp.status_code == 503
@@ -54,7 +55,7 @@ def test_ui_static_css_served() -> None:
     assert "text/css" in resp.headers.get("content-type", "")
 
 
-def test_monitoring_summary_unavailable(tmp_path: Path, monkeypatch) -> None:
+def test_monitoring_summary_unavailable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """GET /monitoring/summary returns available=false when no reports exist."""
     monkeypatch.setattr(api, "_MONITORING_DIR", tmp_path)
     client = TestClient(api.app, raise_server_exceptions=False)
@@ -66,7 +67,7 @@ def test_monitoring_summary_unavailable(tmp_path: Path, monkeypatch) -> None:
     assert payload["summary_markdown"] is None
 
 
-def test_monitoring_summary_loads_reports(tmp_path: Path, monkeypatch) -> None:
+def test_monitoring_summary_loads_reports(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """GET /monitoring/summary loads markdown + JSON report artifacts."""
     mon = tmp_path / "monitoring"
     mon.mkdir(parents=True)

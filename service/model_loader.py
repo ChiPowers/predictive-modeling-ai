@@ -68,12 +68,12 @@ class ModelLoader:
             df = df.reindex(columns=self._feature_names)
         return df
 
-    def _predict_proba(self, df: pd.DataFrame) -> np.ndarray:
+    def _predict_proba(self, df: pd.DataFrame) -> np.ndarray[Any, np.dtype[Any]]:
         if not hasattr(self._predictor, "predict_proba"):
             raise TypeError("Loaded model does not support predict_proba.")
         proba = self._predictor.predict_proba(df)
         # Return probability of positive class (default = 1)
-        return proba[:, 1]
+        return proba[:, 1]  # type: ignore[no-any-return]
 
     def _linear_factors(self, df: pd.DataFrame, n: int) -> list[Factor]:
         """Compute local factor contributions for linear models (e.g., logreg)."""

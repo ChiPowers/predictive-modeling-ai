@@ -14,8 +14,8 @@ CalibrationMethod = Literal["isotonic", "sigmoid"]
 
 def calibrate(
     model: Any,
-    X_val: pd.DataFrame | np.ndarray,
-    y_val: pd.Series | np.ndarray,
+    X_val: pd.DataFrame | np.ndarray[Any, np.dtype[Any]],
+    y_val: pd.Series | np.ndarray[Any, np.dtype[Any]],
     *,
     method: CalibrationMethod = "isotonic",
 ) -> Any:
@@ -85,7 +85,7 @@ def _freeze(model: Any) -> Any:
         return model  # caller sets cv='prefit' via the legacy path
 
 
-def _ece(y_true: np.ndarray, y_prob: np.ndarray, n_bins: int = 10) -> float:
+def _ece(y_true: np.ndarray[Any, np.dtype[Any]], y_prob: np.ndarray[Any, np.dtype[Any]], n_bins: int = 10) -> float:
     """Expected Calibration Error (uniform binning).
 
     ECE = Σ (|bin| / N) * |acc(bin) - conf(bin)|

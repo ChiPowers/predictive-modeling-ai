@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 import yaml
@@ -31,11 +32,11 @@ _DEFAULT_CONFIG = Path("config/labeling.yaml")
 # Config helpers
 # ---------------------------------------------------------------------------
 
-def load_config(config_path: str | Path = _DEFAULT_CONFIG) -> dict:
+def load_config(config_path: str | Path = _DEFAULT_CONFIG) -> dict[str, Any]:
     """Load and return the labeling YAML configuration as a plain dict."""
     path = Path(config_path)
     with path.open() as fh:
-        return yaml.safe_load(fh)
+        return cast(dict[str, Any], yaml.safe_load(fh))
 
 
 # ---------------------------------------------------------------------------

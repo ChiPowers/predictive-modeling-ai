@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import numpy as np
 import pytest
@@ -13,7 +14,7 @@ pytest.importorskip("xgboost", reason="xgboost not installed")
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_data(n: int = 200, p: int = 10, seed: int = 0) -> tuple:
+def _make_data(n: int = 200, p: int = 10, seed: int = 0) -> tuple[Any, Any]:
     rng = np.random.default_rng(seed)
     X = rng.standard_normal((n, p))
     y = (rng.random(n) > 0.7).astype(int)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import joblib
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -7,7 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from service.model_loader import ModelLoader
 
 
-def test_model_loader_supports_wrapped_pipeline_artifact(tmp_path) -> None:
+def test_model_loader_supports_wrapped_pipeline_artifact(tmp_path: Path) -> None:
     X = pd.DataFrame({"credit_score": [700, 620, 760, 580], "orig_ltv": [80, 95, 70, 98]})
     y = [0, 1, 0, 1]
     clf = LogisticRegression().fit(X, y)

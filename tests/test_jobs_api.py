@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +12,7 @@ import service.api as api
 from service.jobs import JobManager
 
 
-def _wait_for_terminal(client: TestClient, job_id: str, timeout_s: float = 2.0) -> dict:
+def _wait_for_terminal(client: TestClient, job_id: str, timeout_s: float = 2.0) -> dict[str, Any]:
     deadline = time.time() + timeout_s
     while time.time() < deadline:
         resp = client.get(f"/jobs/{job_id}")
@@ -28,7 +29,7 @@ def isolated_jobs(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(api, "job_manager", JobManager(max_workers=1))
 
 
-def test_train_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> None:
+def test_train_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None) -> None:
     import training.trainer as trainer
 
     monkeypatch.setattr(trainer, "train_model", lambda *args, **kwargs: Path("models/artifacts/mock.joblib"))
@@ -44,7 +45,7 @@ def test_train_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> N
     assert final["result"]["artifact_path"].endswith("mock.joblib")
 
 
-def test_train_job_failure(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> None:
+def test_train_job_failure(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None) -> None:
     import training.trainer as trainer
 
     def _boom(*args, **kwargs):
@@ -62,7 +63,7 @@ def test_train_job_failure(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> No
     assert "simulated failure" in final["error"]
 
 
-def test_list_jobs_contains_submitted_job(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> None:
+def test_list_jobs_contains_submitted_job(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None) -> None:
     import training.trainer as trainer
 
     monkeypatch.setattr(trainer, "train_model", lambda *args, **kwargs: Path("models/artifacts/mock.joblib"))
@@ -79,7 +80,7 @@ def test_list_jobs_contains_submitted_job(monkeypatch: pytest.MonkeyPatch, isola
     assert any(j["id"] == job_id for j in jobs)
 
 
-def test_seed_demo_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs) -> None:
+def test_seed_demo_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None) -> None:
     monkeypatch.setattr(
         api,
         "_run_seed_demo_job",

@@ -6,6 +6,7 @@ Tests will pass (GREEN) after Plan 02 implements the endpoint.
 """
 from __future__ import annotations
 
+from typing import Any, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import anthropic
@@ -40,7 +41,7 @@ MONITORING_DATA = {
 # Fixtures
 # ---------------------------------------------------------------------------
 @pytest.fixture
-def mock_anthropic_client():
+def mock_anthropic_client() -> Generator[MagicMock, None, None]:
     """Patch service.api._get_anthropic_client with a mock that returns a canned narrative."""
     mock_message_content = MagicMock()
     mock_message_content.text = "Test narrative."
@@ -71,7 +72,7 @@ def test_anthropic_importable() -> None:
 # ---------------------------------------------------------------------------
 # Happy path
 # ---------------------------------------------------------------------------
-def test_interpret_score_returns_narrative(mock_anthropic_client) -> None:
+def test_interpret_score_returns_narrative(mock_anthropic_client: MagicMock) -> None:
     """POST /ai/interpret with context_type='score' returns 200 with narrative string."""
     client = TestClient(api.app, raise_server_exceptions=False)
     resp = client.post(
@@ -88,7 +89,7 @@ def test_interpret_score_returns_narrative(mock_anthropic_client) -> None:
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
-def test_interpret_auth_error_returns_503(monkeypatch) -> None:
+def test_interpret_auth_error_returns_503(monkeypatch: pytest.MonkeyPatch) -> None:
     """When AsyncAnthropic raises AuthenticationError, endpoint returns 503."""
     mock_response = MagicMock()
 
@@ -114,7 +115,7 @@ def test_interpret_auth_error_returns_503(monkeypatch) -> None:
     assert resp.status_code == 503
 
 
-def test_interpret_rate_limit_returns_429(monkeypatch) -> None:
+def test_interpret_rate_limit_returns_429(monkeypatch: pytest.MonkeyPatch) -> None:
     """When AsyncAnthropic raises RateLimitError, endpoint returns 429."""
     mock_response = MagicMock()
 
@@ -140,7 +141,7 @@ def test_interpret_rate_limit_returns_429(monkeypatch) -> None:
     assert resp.status_code == 429
 
 
-def test_interpret_invalid_context_type_returns_422(mock_anthropic_client) -> None:
+def test_interpret_invalid_context_type_returns_422(mock_anthropic_client: MagicMock) -> None:
     """POST /ai/interpret with an unknown context_type returns 422 Unprocessable Entity."""
     client = TestClient(api.app, raise_server_exceptions=False)
     resp = client.post(
@@ -153,7 +154,7 @@ def test_interpret_invalid_context_type_returns_422(mock_anthropic_client) -> No
 # ---------------------------------------------------------------------------
 # Prompt content assertions
 # ---------------------------------------------------------------------------
-def test_score_narrative_prompt_contains_pd(mock_anthropic_client) -> None:
+def test_score_narrative_prompt_contains_pd(mock_anthropic_client: MagicMock) -> None:
     """The prompt sent to Claude for a score context includes the pd value as a percentage."""
     client = TestClient(api.app, raise_server_exceptions=False)
     client.post(
@@ -177,7 +178,7 @@ def test_score_narrative_prompt_contains_pd(mock_anthropic_client) -> None:
     assert "34%" in prompt_text, f"Expected '34%' in prompt, got: {prompt_text!r}"
 
 
-def test_forecast_narrative_prompt_contains_threshold(mock_anthropic_client) -> None:
+def test_forecast_narrative_prompt_contains_threshold(mock_anthropic_client: MagicMock) -> None:
     """The prompt sent to Claude for a forecast context includes threshold exceedance info."""
     client = TestClient(api.app, raise_server_exceptions=False)
     client.post(
@@ -201,7 +202,7 @@ def test_forecast_narrative_prompt_contains_threshold(mock_anthropic_client) -> 
     ), f"Expected threshold info in prompt, got: {prompt_text!r}"
 
 
-def test_monitoring_narrative_prompt_reflects_drift(mock_anthropic_client) -> None:
+def test_monitoring_narrative_prompt_reflects_drift(mock_anthropic_client: MagicMock) -> None:
     """The prompt sent to Claude for a monitoring context includes drift severity info."""
     client = TestClient(api.app, raise_server_exceptions=False)
     client.post(

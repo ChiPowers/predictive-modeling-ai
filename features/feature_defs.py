@@ -40,7 +40,9 @@ class FeatureSpec:
 REGISTRY: dict[str, list[FeatureSpec]] = {}
 
 
-def register(group: str, name: str, dtype: str = "float64", description: str = ""):
+def register(
+    group: str, name: str, dtype: str = "float64", description: str = ""
+) -> Callable[[FeatureFn], FeatureFn]:
     """Decorator to register a feature function.
 
     Args:

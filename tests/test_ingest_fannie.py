@@ -42,7 +42,7 @@ def test_performance_has_required_keys() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _make_origination_row(**overrides) -> dict:
+def _make_origination_row(**overrides: str) -> dict[str, str]:
     """Return a dict representing one valid origination row."""
     base = {
         "credit_score": "720",
@@ -82,7 +82,7 @@ def _make_origination_row(**overrides) -> dict:
     return base
 
 
-def _make_performance_row(**overrides) -> dict:
+def _make_performance_row(**overrides: str) -> dict[str, str]:
     base = {
         "loan_sequence_number": "F23Q10000001",
         "monthly_reporting_period": "022023",
@@ -190,7 +190,7 @@ def test_normalize_blanks() -> None:
     assert out["b"].iloc[0] == "x"
 
 
-def test_ingest_origination_no_files(tmp_path, monkeypatch) -> None:
+def test_ingest_origination_no_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """ingest_origination returns empty list when directory has no matching files."""
     import yaml
 
@@ -221,7 +221,7 @@ def test_ingest_origination_no_files(tmp_path, monkeypatch) -> None:
     assert result == []
 
 
-def test_ingest_origination_with_synthetic_file(tmp_path, monkeypatch) -> None:
+def test_ingest_origination_with_synthetic_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """End-to-end test: write a synthetic pipe-delimited file, ingest it."""
     import yaml
 
@@ -265,7 +265,7 @@ def test_ingest_origination_with_synthetic_file(tmp_path, monkeypatch) -> None:
     assert "loan_sequence_number" in result_df.columns
 
 
-def test_ingest_all_falls_back_to_combined_file(tmp_path, monkeypatch) -> None:
+def test_ingest_all_falls_back_to_combined_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """When classic files are absent, combined tape should be split automatically."""
     import yaml
 

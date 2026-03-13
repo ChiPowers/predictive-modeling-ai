@@ -1,6 +1,8 @@
 """Tests for training/calibration.py."""
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -9,7 +11,7 @@ from sklearn.linear_model import LogisticRegression
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _fitted_model(n: int = 300, seed: int = 0):
+def _fitted_model(n: int = 300, seed: int = 0) -> tuple[Any, Any, Any]:
     X, y = make_classification(n_samples=n, n_features=10, random_state=seed)
     model = LogisticRegression(random_state=seed)
     model.fit(X[: n // 2], y[: n // 2])

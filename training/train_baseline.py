@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ REPORTS_DIR = Path(__file__).parent.parent / "reports"
 
 def _load_config(config_path: str | Path) -> dict[str, Any]:
     with open(config_path) as fh:
-        return yaml.safe_load(fh)
+        return cast(dict[str, Any], yaml.safe_load(fh))
 
 
 def _load_features(features_path: str | Path) -> pd.DataFrame:

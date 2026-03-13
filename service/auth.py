@@ -9,7 +9,7 @@ import os
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from config.settings import settings
 
@@ -106,7 +106,7 @@ def decode_token(token: str) -> dict[str, Any]:
     if not hmac.compare_digest(expected_b64, sig_b64):
         raise ValueError("Invalid token signature")
 
-    payload = json.loads(_b64url_decode(payload_b64).decode("utf-8"))
+    payload: dict[str, Any] = cast(dict[str, Any], json.loads(_b64url_decode(payload_b64).decode("utf-8")))
     if int(payload.get("exp", 0)) < int(time.time()):
         raise ValueError("Token expired")
     return payload

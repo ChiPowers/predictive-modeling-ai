@@ -24,6 +24,7 @@ Usage
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 import yaml
@@ -35,9 +36,9 @@ _CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "features.yaml"
 _DATA_PATHS_PATH = Path(__file__).resolve().parents[1] / "config" / "data_paths.yaml"
 
 
-def _load_feature_config() -> dict:
+def _load_feature_config() -> dict[str, Any]:
     with open(_CONFIG_PATH) as fh:
-        return yaml.safe_load(fh)
+        return cast(dict[str, Any], yaml.safe_load(fh))
 
 
 def _clip(df: pd.DataFrame, bounds: dict[str, list[float]]) -> pd.DataFrame:
@@ -167,7 +168,7 @@ def _merge_perf_summary(orig: pd.DataFrame, perf: pd.DataFrame) -> None:
             perf["current_delinquency_status"], errors="coerce"
         )
 
-    agg_dict: dict[str, tuple] = {}
+    agg_dict: dict[str, tuple[str, str]] = {}
     if "loan_age" in perf.columns:
         agg_dict["max_loan_age"] = ("loan_age", "max")
     if "current_actual_upb" in perf.columns:
@@ -202,7 +203,7 @@ def run(source: str, groups: list[str] | None = None) -> pd.DataFrame:
     log.info("build_features.run called: source={}", source)
 
     with open(_DATA_PATHS_PATH) as fh:
-        dp_cfg = yaml.safe_load(fh)
+        dp_cfg: dict[str, Any] = cast(dict[str, Any], yaml.safe_load(fh))
 
     if source == "fannie-mae":
         fm = dp_cfg["fannie_mae"]

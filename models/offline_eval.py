@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
 from models.policy import Decision, Policy
 
@@ -202,7 +203,7 @@ def compare_policies(
 
 def _write_json(
     results: list[PolicyMetrics],
-    dataset_info: dict,
+    dataset_info: dict[str, Any],
     path: Path,
 ) -> None:
     payload = {
@@ -213,7 +214,7 @@ def _write_json(
     path.write_text(json.dumps(payload, indent=2))
 
 
-def _build_summary(results: list[PolicyMetrics]) -> dict:
+def _build_summary(results: list[PolicyMetrics]) -> dict[str, Any]:
     """Identify the best policy on key dimensions."""
     best_approval = max(results, key=lambda r: r.approval_rate)
     best_loss = min(results, key=lambda r: r.expected_loss_rate)
@@ -231,7 +232,7 @@ def _build_summary(results: list[PolicyMetrics]) -> dict:
 
 def _write_markdown(
     results: list[PolicyMetrics],
-    dataset_info: dict,
+    dataset_info: dict[str, Any],
     path: Path,
 ) -> None:
     has_actuals = dataset_info["has_actual_labels"]
@@ -351,10 +352,10 @@ def _make_synthetic_dataset(n: int = 5000, seed: int = 42) -> tuple[list[float],
     return pd_scores, actual_defaults
 
 
-def _beta_variate(alpha: float, beta: float, rng) -> float:
+def _beta_variate(alpha: float, beta: float, rng: Any) -> float:
     """Sample from Beta(alpha, beta) using the stdlib random module."""
     # random.betavariate available since Python 3.x
-    return rng.betavariate(alpha, beta)
+    return float(rng.betavariate(alpha, beta))
 
 
 if __name__ == "__main__":

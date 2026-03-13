@@ -1,6 +1,8 @@
 """Tests for data_ingestion."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 
@@ -12,7 +14,7 @@ def test_load_unknown_source_raises_value_error() -> None:
         load("unknown-source")
 
 
-def test_from_csv(tmp_path) -> None:
+def test_from_csv(tmp_path: Path) -> None:
     """from_csv should return a non-empty DataFrame."""
     import pandas as pd
 

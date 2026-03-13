@@ -6,7 +6,7 @@ import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import anthropic
 import pandas as pd
@@ -138,7 +138,7 @@ def _load_json_if_exists(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text())
+        return cast(dict[str, Any], json.loads(path.read_text()))
     except json.JSONDecodeError:
         return None
 

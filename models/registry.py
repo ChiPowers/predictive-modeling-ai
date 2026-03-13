@@ -6,7 +6,7 @@ import json
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from config.settings import settings
@@ -50,7 +50,7 @@ def _load_manifest(namespace: str | None = None) -> dict[str, Any]:
     if not path.exists():
         return {"models": {}, "latest": {}}
     try:
-        return json.loads(path.read_text())
+        return cast(dict[str, Any], json.loads(path.read_text()))
     except json.JSONDecodeError:
         return {"models": {}, "latest": {}}
 
@@ -148,9 +148,8 @@ def activate(name: str, version_id: str | None = None, *, namespace: str | None 
     if not versions:
         raise FileNotFoundError(f"No versions found for model '{name}'")
 
-    target = versions[0] if version_id is None else next(
-        (v for v in versions if v["version_id"] == version_id), None
-    )
+    _found = next((v for v in versions if v["version_id"] == version_id), None)
+    target = versions[0] if version_id is None else _found
     if target is None:
         raise FileNotFoundError(f"Model version not found: {name}:{version_id}")
 
@@ -180,6 +179,6 @@ def get_active(namespace: str | None = None) -> dict[str, Any] | None:
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text())
+        return cast(dict[str, Any], json.loads(path.read_text()))
     except json.JSONDecodeError:
         return None

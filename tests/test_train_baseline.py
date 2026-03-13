@@ -14,7 +14,7 @@ from training.train_baseline import _evaluate, run
 # ---------------------------------------------------------------------------
 
 @pytest.fixture()
-def features_parquet(tmp_path) -> Path:
+def features_parquet(tmp_path: Path) -> Path:
     rng = np.random.default_rng(7)
     n = 730  # ~2 years daily
     dates = pd.date_range("2022-01-01", periods=n, freq="D")
@@ -34,7 +34,7 @@ def features_parquet(tmp_path) -> Path:
 
 
 @pytest.fixture()
-def features_csv(tmp_path, features_parquet) -> Path:
+def features_csv(tmp_path: Path, features_parquet: Path) -> Path:
     df = pd.read_parquet(features_parquet)
     path = tmp_path / "features.csv"
     df.to_csv(path, index=False)

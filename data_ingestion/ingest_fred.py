@@ -25,6 +25,7 @@ from __future__ import annotations
 import io
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any, cast
 
 import httpx
 import pandas as pd
@@ -39,9 +40,9 @@ from utils.logging import log
 _CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "fred.yaml"
 
 
-def _load_config() -> dict:
+def _load_config() -> dict[str, Any]:
     with open(_CONFIG_PATH) as fh:
-        return yaml.safe_load(fh)
+        return cast(dict[str, Any], yaml.safe_load(fh))
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +50,7 @@ def _load_config() -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _fetch_series_api(series_id: str, api_key: str, cfg: dict) -> pd.Series:
+def _fetch_series_api(series_id: str, api_key: str, cfg: dict[str, Any]) -> pd.Series:
     """Fetch a FRED series via the authenticated JSON API.
 
     Returns a DatetimeIndex-indexed Series of float values.  FRED missing-value
@@ -78,7 +79,7 @@ def _fetch_series_api(series_id: str, api_key: str, cfg: dict) -> pd.Series:
     return pd.to_numeric(s, errors="coerce")
 
 
-def _fetch_series_csv(series_id: str, cfg: dict) -> pd.Series:
+def _fetch_series_csv(series_id: str, cfg: dict[str, Any]) -> pd.Series:
     """Fetch a FRED series from the public CSV endpoint (no API key required).
 
     Returns a DatetimeIndex-indexed Series of float values.
@@ -137,14 +138,14 @@ def _to_monthly(s: pd.Series, resample_method: str) -> pd.Series:
 # ---------------------------------------------------------------------------
 
 
-def _make_api_fetcher(api_key: str, cfg: dict) -> Callable[[str], pd.Series]:
+def _make_api_fetcher(api_key: str, cfg: dict[str, Any]) -> Callable[[str], pd.Series]:
     def _fetch(series_id: str) -> pd.Series:
         return _fetch_series_api(series_id, api_key, cfg)
 
     return _fetch
 
 
-def _make_csv_fetcher(cfg: dict) -> Callable[[str], pd.Series]:
+def _make_csv_fetcher(cfg: dict[str, Any]) -> Callable[[str], pd.Series]:
     def _fetch(series_id: str) -> pd.Series:
         return _fetch_series_csv(series_id, cfg)
 
@@ -215,7 +216,7 @@ def ingest_fred(
         )
         fetcher = _make_csv_fetcher(cfg)
 
-    series_config: list[dict] = cfg["series"]
+    series_config: list[dict[str, Any]] = cfg["series"]
     monthly_frames: list[pd.Series] = []
 
     for sc in series_config:

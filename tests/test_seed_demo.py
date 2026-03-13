@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 
 from data_ingestion.seed_demo import seed_demo_data
 
 
-def test_seed_demo_data_creates_combined_file(tmp_path) -> None:
+def test_seed_demo_data_creates_combined_file(tmp_path: Path) -> None:
     out = seed_demo_data(
         output_dir=str(tmp_path),
         filename="demo_2025Q1.csv",

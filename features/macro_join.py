@@ -19,6 +19,7 @@ Usage
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import yaml
@@ -33,7 +34,7 @@ _CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "fred.yaml"
 # ---------------------------------------------------------------------------
 
 
-def _load_macro(cfg: dict | None = None) -> pd.DataFrame:
+def _load_macro(cfg: dict[str, Any] | None = None) -> pd.DataFrame:
     """Load the FRED macro parquet and return it with a monthly PeriodIndex."""
     if cfg is None:
         with open(_CONFIG_PATH) as fh:
@@ -143,7 +144,7 @@ def join_macro_features(
     result = df.copy()
     for col in macro_cols:
         result[col] = period_str_series.map(
-            lambda p, c=col: macro_lookup.get(p, {}).get(c)  # type: ignore[return-value]
+            lambda p, c=col: macro_lookup.get(p, {}).get(c)
         )
 
     null_rows = result[macro_cols].isna().any(axis=1).sum()

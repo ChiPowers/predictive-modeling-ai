@@ -24,10 +24,10 @@ REPORTS_DIR = Path("reports")
 
 
 def train_xgb(
-    X_train: pd.DataFrame | np.ndarray,
-    y_train: pd.Series | np.ndarray,
-    X_val: pd.DataFrame | np.ndarray,
-    y_val: pd.Series | np.ndarray,
+    X_train: pd.DataFrame | np.ndarray[Any, np.dtype[Any]],
+    y_train: pd.Series | np.ndarray[Any, np.dtype[Any]],
+    X_val: pd.DataFrame | np.ndarray[Any, np.dtype[Any]],
+    y_val: pd.Series | np.ndarray[Any, np.dtype[Any]],
     *,
     n_iter: int = 25,
     cv: int = 3,
