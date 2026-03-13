@@ -1,0 +1,22 @@
+{
+  "psi": 0.0,
+  "ks_statistic": 0.0,
+  "ks_p_value": 1.0,
+  "reference_percentiles": {
+    "p10": 44.0,
+    "p25": 63.0,
+    "p50": 80.0,
+    "p75": 90.0,
+    "p90": 95.0
+  },
+  "current_percentiles": {
+    "p10": 44.0,
+    "p25": 63.0,
+    "p50": 80.0,
+    "p75": 90.0,
+    "p90": 95.0
+  },
+  "mean_shift": 0.0,
+  "severity": "ok",
+  "alert": false
+}

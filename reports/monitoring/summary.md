@@ -1,15 +1,37 @@
 # Monitoring Summary
 
-**Run:** _(not yet generated — run `pmai monitor` to produce this report)_
-**Status:** PENDING
+**Run:** 2026-03-12 20:47 UTC  
+**Status:** OK  
 
 ## Feature Drift
 
-_No feature drift results._
+| Feature | PSI | KS stat | KS p-val | Severity |
+|---------|-----|---------|----------|----------|
+| credit_score | 0.0000 | 0.0000 | 1.0000 | ok |
+| orig_ltv | 0.0000 | 0.0000 | 1.0000 | ok |
+| orig_dti | 0.0000 | 0.0000 | 1.0000 | ok |
+| orig_upb | 0.0000 | 0.0000 | 1.0000 | ok |
+| orig_interest_rate | 0.0000 | 0.0000 | 1.0000 | ok |
+| orig_cltv | 0.0000 | 0.0000 | 1.0000 | ok |
+
+> PSI < 0.10 = ok · 0.10–0.25 = warning · > 0.25 = alert  
+> KS p-value < 0.05 = alert
 
 ## Score Drift (PD Distribution)
 
-_No score drift results._
+- **PSI:** 0.0  
+- **KS statistic:** 0.0  
+- **KS p-value:** 1.0  
+- **Mean shift:** +0.0000  
+- **Severity:** ok  
+
+| Percentile | Reference | Current |
+|------------|-----------|---------|
+| p10 | 44.0 | 44.0 |
+| p25 | 63.0 | 63.0 |
+| p50 | 80.0 | 80.0 |
+| p75 | 90.0 | 90.0 |
+| p90 | 95.0 | 95.0 |
 
 ## Performance Drift (Rolling AUC)
 

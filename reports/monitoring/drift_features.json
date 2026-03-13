@@ -1,0 +1,44 @@
+{
+  "credit_score": {
+    "psi": 0.0,
+    "ks_statistic": 0.0,
+    "ks_p_value": 1.0,
+    "severity": "ok",
+    "alert": false
+  },
+  "orig_ltv": {
+    "psi": 0.0,
+    "ks_statistic": 0.0,
+    "ks_p_value": 1.0,
+    "severity": "ok",
+    "alert": false
+  },
+  "orig_dti": {
+    "psi": 0.0,
+    "ks_statistic": 0.0,
+    "ks_p_value": 1.0,
+    "severity": "ok",
+    "alert": false
+  },
+  "orig_upb": {
+    "psi": 0.0,
+    "ks_statistic": 0.0,
+    "ks_p_value": 1.0,
+    "severity": "ok",
+    "alert": false
+  },
+  "orig_interest_rate": {
+    "psi": 0.0,
+    "ks_statistic": 0.0,
+    "ks_p_value": 1.0,
+    "severity": "ok",
+    "alert": false
+  },
+  "orig_cltv": {
+    "psi": 0.0,
+    "ks_statistic": 0.0,
+    "ks_p_value": 1.0,
+    "severity": "ok",
+    "alert": false
+  }
+}

@@ -268,9 +268,13 @@ def _build_delinquency_ts(perf_df: pd.DataFrame) -> pd.DataFrame:
     perf = perf_df.copy()
     perf["period"] = pd.to_numeric(perf["monthly_reporting_period"], errors="coerce")
     perf = perf.dropna(subset=["period"]).copy()
-    perf["period"] = perf["period"].astype(int).astype(str)
-    # Convert YYYYMM → datetime
-    perf["ds"] = pd.to_datetime(perf["period"], format="%Y%m", errors="coerce")
+    # Zero-pad to 6 chars to restore stripped leading zeros
+    perf["period"] = perf["period"].astype(int).astype(str).str.zfill(6)
+    # Fannie Mae real data uses MMYYYY; seed/demo data uses YYYYMM.
+    # Try YYYYMM first, fall back to MMYYYY for real ingested data.
+    perf["ds"] = pd.to_datetime(perf["period"], format="%Y%m", errors="coerce").fillna(
+        pd.to_datetime(perf["period"], format="%m%Y", errors="coerce")
+    )
     perf = perf.dropna(subset=["ds"])
 
     status = pd.to_numeric(perf["current_delinquency_status"], errors="coerce").fillna(0)
