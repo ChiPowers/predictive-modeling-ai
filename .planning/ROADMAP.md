@@ -59,7 +59,14 @@ Plans:
   2. The demo ends with a summary narrative: "Your portfolio is ready. Here's what the model found."
   3. Batch score results display as a sortable table (loan number, PD score, risk tier, top risk factor) plus a donut or bar chart showing distribution by risk tier — no raw JSON visible
   4. A portfolio-level AI insight paragraph appears below batch results summarizing aggregate risk and a recommended action
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Test scaffold (all Phase 3 stubs) + backend batch prompt branch in api.py (Wave 1)
+- [ ] 03-02-PLAN.md — HTML restructure + CSS: demo checklist, hidden job form, portfolio section skeleton (Wave 1)
+- [ ] 03-03-PLAN.md — runFullDemo() JS orchestration: polling, retry, step states, completion + auto-scroll (Wave 2)
+- [ ] 03-04-PLAN.md — Portfolio JS: renderPortfolioTable(), renderDonutChart(), update initBatchForm() (Wave 3)
+- [ ] 03-05-PLAN.md — Human visual verification checkpoint (Wave 4)
 
 ### Phase 4: Monitoring Panel
 **Goal**: Visitors can see at a glance whether the model is healthy, which features are drifting, and what the AI recommends — without reading drift metric documentation
@@ -80,5 +87,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. AI Narrative Backend | 3/3 | Complete   | 2026-03-12 |
 | 2. Score Panel Redesign | 3/3 | Complete   | 2026-03-12 |
-| 3. Demo Flow + Portfolio Dashboard | 0/TBD | Not started | - |
+| 3. Demo Flow + Portfolio Dashboard | 0/5 | Not started | - |
 | 4. Monitoring Panel | 0/TBD | Not started | - |
