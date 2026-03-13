@@ -139,8 +139,12 @@ class ModelLoader:
             return linear_factors
 
         # Fall back to model feature importances (global, not instance-level)
-        if hasattr(self._predictor, "feature_importances_"):
-            importances = self._predictor.feature_importances_
+        # Check pipeline's inner clf first (Pipeline doesn't expose feature_importances_ directly)
+        predictor = self._predictor
+        if hasattr(predictor, "named_steps"):
+            predictor = predictor.named_steps.get("clf", predictor)
+        if hasattr(predictor, "feature_importances_"):
+            importances = predictor.feature_importances_
             ranked = sorted(
                 zip(feature_names, importances),
                 key=lambda x: x[1],

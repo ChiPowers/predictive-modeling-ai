@@ -684,7 +684,14 @@ def batch_score(request: BatchScoreRequest) -> BatchScoreResponse:
 @app.post("/ai/interpret", response_model=InterpretResponse, tags=["ai"])
 async def ai_interpret(req: InterpretRequest) -> InterpretResponse:
     """Call Claude to generate a plain-language narrative from model output."""
-    client = _get_anthropic_client()
+    try:
+        client = _get_anthropic_client()
+    except anthropic.AuthenticationError as exc:
+        log.error("Claude client init failed (ANTHROPIC_API_KEY missing or invalid): {}", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI narrative unavailable: ANTHROPIC_API_KEY not configured",
+        ) from exc
     prompt = _build_prompt(req.context_type, req.data)
     try:
         message = await client.messages.create(
