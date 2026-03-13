@@ -1,4 +1,5 @@
 """Smoke tests for the FastAPI prediction service."""
+
 from __future__ import annotations
 
 import pytest

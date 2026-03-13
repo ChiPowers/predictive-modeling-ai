@@ -1,4 +1,5 @@
 """Tests for data_ingestion."""
+
 from __future__ import annotations
 
 from pathlib import Path

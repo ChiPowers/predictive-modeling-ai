@@ -1,4 +1,5 @@
 """Tests for training/calibration.py."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -11,6 +12,7 @@ from sklearn.linear_model import LogisticRegression
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _fitted_model(n: int = 300, seed: int = 0) -> tuple[Any, Any, Any]:
     X, y = make_classification(n_samples=n, n_features=10, random_state=seed)
     model = LogisticRegression(random_state=seed)
@@ -21,6 +23,7 @@ def _fitted_model(n: int = 300, seed: int = 0) -> tuple[Any, Any, Any]:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def test_calibrate_returns_model_with_predict_proba():
     from training.calibration import calibrate
@@ -54,6 +57,6 @@ def test_ece_decreases_or_stays_flat():
     ece_after = _ece(y_arr, cal.predict_proba(X_val)[:, 1])
 
     # Allow a tiny tolerance — isotonic fitting on the same set shouldn't inflate ECE
-    assert ece_after <= ece_before + 0.05, (
-        f"ECE worsened significantly: before={ece_before:.4f} after={ece_after:.4f}"
-    )
+    assert (
+        ece_after <= ece_before + 0.05
+    ), f"ECE worsened significantly: before={ece_before:.4f} after={ece_after:.4f}"

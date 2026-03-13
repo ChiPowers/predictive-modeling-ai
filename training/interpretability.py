@@ -1,4 +1,5 @@
 """SHAP-based model interpretability — feature importance and explanation plots."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -44,6 +45,7 @@ def explain(
         Dict mapping every feature name to its mean absolute SHAP value.
     """
     import matplotlib
+
     matplotlib.use("Agg")  # headless — no display required
 
     # ── Resolve feature names ─────────────────────────────────────────────
@@ -53,9 +55,7 @@ def explain(
     X_bg = _to_array(X_background)
     X_ex = _to_array(X_explain)
 
-    log.info(
-        "Computing SHAP values — background={} explain={}", X_bg.shape, X_ex.shape
-    )
+    log.info("Computing SHAP values — background={} explain={}", X_bg.shape, X_ex.shape)
 
     # ── Build explainer ───────────────────────────────────────────────────
     explainer = _build_explainer(model, X_bg)
@@ -81,6 +81,7 @@ def explain(
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _build_explainer(model: Any, X_bg: np.ndarray[Any, np.dtype[Any]]) -> Any:
     """Return a SHAP explainer, preferring TreeExplainer."""
@@ -154,12 +155,10 @@ def _save_bar(
     mean_abs = np.abs(sv_vals).mean(axis=0)
 
     n = min(max_display, len(mean_abs))
-    top_idx = np.argsort(mean_abs)[-n:][::-1]   # descending
+    top_idx = np.argsort(mean_abs)[-n:][::-1]  # descending
 
     names = (
-        [feature_names[i] for i in top_idx]
-        if feature_names
-        else [f"feature_{i}" for i in top_idx]
+        [feature_names[i] for i in top_idx] if feature_names else [f"feature_{i}" for i in top_idx]
     )
     values = [float(mean_abs[i]) for i in top_idx]
 
@@ -175,9 +174,5 @@ def _save_bar(
     log.debug("Saved {}", out)
 
     # Return importance for every feature (not just top-N)
-    all_names = (
-        feature_names
-        if feature_names
-        else [f"feature_{i}" for i in range(len(mean_abs))]
-    )
+    all_names = feature_names if feature_names else [f"feature_{i}" for i in range(len(mean_abs))]
     return dict(zip(all_names, mean_abs.tolist(), strict=False))

@@ -1,4 +1,5 @@
 """FastAPI prediction service."""
+
 from __future__ import annotations
 
 import json
@@ -68,7 +69,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     log.info("API starting up")
     init_db()
     if not os.environ.get("ANTHROPIC_API_KEY"):
-        log.warning("ANTHROPIC_API_KEY not set — POST /ai/interpret will return 503 on auth failure")
+        log.warning(
+            "ANTHROPIC_API_KEY not set — POST /ai/interpret will return 503 on auth failure"
+        )
     try:
         scoring_model.load()
     except FileNotFoundError as exc:
@@ -191,8 +194,12 @@ def _run_monitor_job(req: MonitorJobRequest) -> dict[str, Any]:
     ref_df = pd.read_parquet(req.reference_path)
     cur_df = pd.read_parquet(req.current_path)
 
-    score_ref = ref_df[req.score_ref_col] if req.score_ref_col in ref_df.columns else pd.Series(dtype=float)
-    score_cur = cur_df[req.score_cur_col] if req.score_cur_col in cur_df.columns else pd.Series(dtype=float)
+    score_ref = (
+        ref_df[req.score_ref_col] if req.score_ref_col in ref_df.columns else pd.Series(dtype=float)
+    )
+    score_cur = (
+        cur_df[req.score_cur_col] if req.score_cur_col in cur_df.columns else pd.Series(dtype=float)
+    )
     labels = cur_df[req.label_col] if req.label_col in cur_df.columns else None
     period = cur_df[req.period_col] if req.period_col in cur_df.columns else None
     auc_scores = score_cur if labels is not None else None
@@ -275,10 +282,16 @@ def _build_prompt(context_type: str, data: dict[str, Any]) -> str:
         perf_drift = data.get("perf_drift") or {}
         score_alert = score_drift.get("alert", False)
         auc = perf_drift.get("auc", None)
-        high_drift = [k for k, v in drift_features.items() if isinstance(v, dict) and v.get("psi", 0) > 0.2]
+        high_drift = [
+            k for k, v in drift_features.items() if isinstance(v, dict) and v.get("psi", 0) > 0.2
+        ]
         auc_clause = f" AUC: {auc:.2f}." if auc is not None else ""
         alert_clause = " Score distribution alert is active." if score_alert else ""
-        drift_clause = f" High-drift features: {', '.join(high_drift)}." if high_drift else " No features show high drift."
+        drift_clause = (
+            f" High-drift features: {', '.join(high_drift)}."
+            if high_drift
+            else " No features show high drift."
+        )
         return (
             f"Model monitoring results: {len(drift_features)} features analyzed.{drift_clause}{alert_clause}{auc_clause} "
             "Write a 2-3 sentence plain-language status summary and state whether retraining is recommended."
@@ -332,7 +345,9 @@ def _require_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
     username = str(payload.get("sub", "")).strip()
     if not username:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject"
+        )
     return username
 
 
@@ -428,28 +443,48 @@ async def monitoring_summary() -> MonitoringSummaryResponse:
     )
 
 
-@app.post("/jobs/train", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["jobs"])
+@app.post(
+    "/jobs/train",
+    response_model=JobStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["jobs"],
+)
 async def submit_train_job(req: TrainJobRequest) -> JobStatusResponse:
     """Submit a background training job."""
     job = job_manager.submit("train", req.model_dump(), lambda: _run_train_job(req))
     return JobStatusResponse(**job)
 
 
-@app.post("/jobs/pipeline", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["jobs"])
+@app.post(
+    "/jobs/pipeline",
+    response_model=JobStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["jobs"],
+)
 async def submit_pipeline_job(req: PipelineJobRequest) -> JobStatusResponse:
     """Submit a background ingest->features->train pipeline job."""
     job = job_manager.submit("pipeline", req.model_dump(), lambda: _run_pipeline_job(req))
     return JobStatusResponse(**job)
 
 
-@app.post("/jobs/monitor", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["jobs"])
+@app.post(
+    "/jobs/monitor",
+    response_model=JobStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["jobs"],
+)
 async def submit_monitor_job(req: MonitorJobRequest) -> JobStatusResponse:
     """Submit a background monitoring job."""
     job = job_manager.submit("monitor", req.model_dump(), lambda: _run_monitor_job(req))
     return JobStatusResponse(**job)
 
 
-@app.post("/jobs/seed-demo", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["jobs"])
+@app.post(
+    "/jobs/seed-demo",
+    response_model=JobStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["jobs"],
+)
 async def submit_seed_demo_job(req: SeedDemoJobRequest) -> JobStatusResponse:
     """Submit a background synthetic data generation job for demo environments."""
     job = job_manager.submit("seed-demo", req.model_dump(), lambda: _run_seed_demo_job(req))
@@ -470,8 +505,15 @@ async def get_job(job_id: str) -> JobStatusResponse:
     return JobStatusResponse(**job)
 
 
-@app.post("/me/jobs/train", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["me"])
-async def submit_my_train_job(req: TrainJobRequest, username: str = Depends(_require_user)) -> JobStatusResponse:
+@app.post(
+    "/me/jobs/train",
+    response_model=JobStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["me"],
+)
+async def submit_my_train_job(
+    req: TrainJobRequest, username: str = Depends(_require_user)
+) -> JobStatusResponse:
     job = job_manager.submit(
         "train",
         req.model_dump(),
@@ -481,7 +523,12 @@ async def submit_my_train_job(req: TrainJobRequest, username: str = Depends(_req
     return JobStatusResponse(**job)
 
 
-@app.post("/me/jobs/seed-demo", response_model=JobStatusResponse, status_code=status.HTTP_202_ACCEPTED, tags=["me"])
+@app.post(
+    "/me/jobs/seed-demo",
+    response_model=JobStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["me"],
+)
 async def submit_my_seed_demo_job(
     req: SeedDemoJobRequest,
     username: str = Depends(_require_user),
@@ -550,7 +597,9 @@ async def list_my_models(username: str = Depends(_require_user)) -> ModelCatalog
 
 
 @app.get("/me/models/{name}/versions", response_model=list[ModelVersionResponse], tags=["me"])
-async def list_my_model_versions(name: str, username: str = Depends(_require_user)) -> list[ModelVersionResponse]:
+async def list_my_model_versions(
+    name: str, username: str = Depends(_require_user)
+) -> list[ModelVersionResponse]:
     versions = model_registry.get_versions(name, namespace=username)
     return [ModelVersionResponse(**v) for v in versions]
 
@@ -644,9 +693,13 @@ def score_me(request: ScoreRequest, username: str = Depends(_require_user)) -> S
         model_obj = model_registry.load("current", namespace=username)
         return _score_with_model(model_obj, request.features, request.threshold)
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
     except Exception as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
 
 
 @app.post(

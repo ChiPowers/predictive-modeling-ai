@@ -14,6 +14,7 @@ results = run_score_drift(
     output_dir=Path("reports/monitoring"),
 )
 """
+
 from __future__ import annotations
 
 from pathlib import Path

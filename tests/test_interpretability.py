@@ -1,4 +1,5 @@
 """Tests for training/interpretability.py."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -14,6 +15,7 @@ from sklearn.ensemble import GradientBoostingClassifier  # noqa: E402
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _fitted_tree_model(n: int = 200, p: int = 8, seed: int = 0) -> tuple[Any, Any, Any]:
     X, y = make_classification(n_samples=n, n_features=p, random_state=seed)
     model = GradientBoostingClassifier(n_estimators=20, random_state=seed)
@@ -24,6 +26,7 @@ def _fitted_tree_model(n: int = 200, p: int = 8, seed: int = 0) -> tuple[Any, An
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 def test_explain_returns_feature_importance_dict(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

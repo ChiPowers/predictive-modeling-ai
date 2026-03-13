@@ -1,4 +1,5 @@
 """Concrete dataset source implementations."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,5 +15,6 @@ def from_csv(path: str | Path) -> pd.DataFrame:
 def from_parquet(path: str | Path) -> pd.DataFrame:
     """Load a local Parquet file."""
     return pd.read_parquet(path)
+
 
 # TODO: add from_fred(), from_url(), from_s3(), etc.

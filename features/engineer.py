@@ -3,6 +3,7 @@
 The heavy lifting lives in :mod:`features.build_features`; this module keeps
 the call site in ``main.py`` simple and stable.
 """
+
 from __future__ import annotations
 
 import pandas as pd

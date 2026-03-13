@@ -7,6 +7,7 @@ run_monitoring_job(feature_ref, feature_cur, score_ref, score_cur,
     Orchestrates feature drift, score drift, and perf drift, then writes
     a consolidated Markdown summary to output_dir/summary.md.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -194,9 +195,7 @@ def write_summary_report(results: dict[str, Any], output_dir: Path) -> Path:
         ]
         for row in perf.get("rolling_auc", []):
             auc_str = f"{row['auc']:.4f}" if row["auc"] is not None else "N/A"
-            lines.append(
-                f"| {row['period']} | {auc_str} | {row['n_obs']} | {row['n_defaults']} |"
-            )
+            lines.append(f"| {row['period']} | {auc_str} | {row['n_obs']} | {row['n_defaults']} |")
         lines.append("")
     else:
         lines += ["_Labels not yet available — rolling AUC not computed._", ""]

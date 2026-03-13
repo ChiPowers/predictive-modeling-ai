@@ -7,6 +7,7 @@ https://capitalmarkets.fanniemae.com/media/document/xlsx/
 Both files are pipe-delimited with NO header row.  Column order below
 matches the official layout (32 columns each as of the 2022+ release).
 """
+
 from __future__ import annotations
 
 import pandera as pa
@@ -128,9 +129,7 @@ ORIGINATION_SCHEMA = DataFrameSchema(
         "maturity_date": Column(_S, nullable=False),
         "msa": _nullable_int(),
         "mi_pct": Column(_F, checks=pa.Check.in_range(0, 55), nullable=True, coerce=True),
-        "num_units": Column(
-            _I, checks=pa.Check.in_range(1, 4), nullable=False, coerce=True
-        ),
+        "num_units": Column(_I, checks=pa.Check.in_range(1, 4), nullable=False, coerce=True),
         "occupancy_status": _categorical(["P", "I", "S", "9"]),
         "orig_cltv": Column(_F, checks=pa.Check.in_range(0, 200), nullable=True, coerce=True),
         "orig_dti": Column(_F, checks=pa.Check.in_range(0, 65), nullable=True, coerce=True),
@@ -147,9 +146,7 @@ ORIGINATION_SCHEMA = DataFrameSchema(
         "postal_code": Column(_S, nullable=True, coerce=True),
         "loan_sequence_number": Column(_S, nullable=False, unique=False),
         "loan_purpose": _categorical(["P", "C", "N", "R", "9"]),
-        "orig_loan_term": Column(
-            _I, checks=pa.Check.in_range(1, 480), nullable=False, coerce=True
-        ),
+        "orig_loan_term": Column(_I, checks=pa.Check.in_range(1, 480), nullable=False, coerce=True),
         "num_borrowers": _nullable_int(),
         "seller_name": Column(_S, nullable=True, coerce=True),
         "servicer_name": Column(_S, nullable=True, coerce=True),
@@ -161,7 +158,7 @@ ORIGINATION_SCHEMA = DataFrameSchema(
         "io_indicator": _categorical(["Y", "N"]),
         "mi_cancellation_indicator": Column(_S, nullable=True, coerce=True),
     },
-    strict=False,   # allow additional columns if Fannie Mae adds new ones
+    strict=False,  # allow additional columns if Fannie Mae adds new ones
     coerce=True,
 )
 

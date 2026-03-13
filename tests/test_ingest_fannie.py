@@ -1,4 +1,5 @@
 """Tests for data_ingestion.ingest_fannie and data_ingestion.schema."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -221,7 +222,9 @@ def test_ingest_origination_no_files(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert result == []
 
 
-def test_ingest_origination_with_synthetic_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ingest_origination_with_synthetic_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """End-to-end test: write a synthetic pipe-delimited file, ingest it."""
     import yaml
 
@@ -265,7 +268,9 @@ def test_ingest_origination_with_synthetic_file(tmp_path: Path, monkeypatch: pyt
     assert "loan_sequence_number" in result_df.columns
 
 
-def test_ingest_all_falls_back_to_combined_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ingest_all_falls_back_to_combined_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """When classic files are absent, combined tape should be split automatically."""
     import yaml
 
@@ -335,7 +340,10 @@ def test_ingest_all_falls_back_to_combined_file(tmp_path: Path, monkeypatch: pyt
 
     combined_file = combined_dir / "2025Q1.csv"
     combined_file.write_text(
-        _combined_row("012025", "0", "300000") + "\n" + _combined_row("022025", "1", "299500") + "\n",
+        _combined_row("012025", "0", "300000")
+        + "\n"
+        + _combined_row("022025", "1", "299500")
+        + "\n",
         encoding="latin-1",
     )
 
@@ -352,4 +360,6 @@ def test_ingest_all_falls_back_to_combined_file(tmp_path: Path, monkeypatch: pyt
     assert len(orig_df) == 1
     assert len(perf_df) == 2
     assert set(["loan_sequence_number", "orig_upb", "credit_score"]).issubset(orig_df.columns)
-    assert set(["loan_sequence_number", "monthly_reporting_period", "loan_age"]).issubset(perf_df.columns)
+    assert set(["loan_sequence_number", "monthly_reporting_period", "loan_age"]).issubset(
+        perf_df.columns
+    )

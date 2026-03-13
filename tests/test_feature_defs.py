@@ -1,4 +1,5 @@
 """Tests for feature definition helpers."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -19,4 +20,3 @@ def test_performance_features_handle_missing_columns() -> None:
     assert paydown.isna().all()
     assert spread.isna().all()
     assert term_ratio.isna().all()
-

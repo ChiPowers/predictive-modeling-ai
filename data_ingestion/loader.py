@@ -1,4 +1,5 @@
 """Data loading façade — routes source keys to concrete loaders."""
+
 from __future__ import annotations
 
 from pathlib import Path

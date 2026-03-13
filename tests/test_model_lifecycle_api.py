@@ -1,4 +1,5 @@
 """API tests for model lifecycle endpoints."""
+
 from __future__ import annotations
 
 from pathlib import Path

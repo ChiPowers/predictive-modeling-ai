@@ -1,4 +1,5 @@
 """XGBoost model training with bounded hyperparameter search."""
+
 from __future__ import annotations
 
 import json
@@ -59,7 +60,9 @@ def train_xgb(
     n_neg = int(np.sum(y_train_arr == 0))
     n_pos = int(np.sum(y_train_arr == 1))
     scale_pos_weight = float(n_neg / max(n_pos, 1))
-    log.info("Class balance  neg={} pos={}  scale_pos_weight={:.2f}", n_neg, n_pos, scale_pos_weight)
+    log.info(
+        "Class balance  neg={} pos={}  scale_pos_weight={:.2f}", n_neg, n_pos, scale_pos_weight
+    )
 
     base = XGBClassifier(
         objective="binary:logistic",
@@ -73,14 +76,14 @@ def train_xgb(
 
     # Bounded search space — keeps wall-clock time predictable
     param_dist: dict[str, Any] = {
-        "n_estimators": randint(100, 601),          # [100, 600]
-        "max_depth": randint(3, 10),                 # [3, 9]
-        "learning_rate": uniform(0.01, 0.29),        # [0.01, 0.30]
-        "subsample": uniform(0.6, 0.4),              # [0.6, 1.0]
-        "colsample_bytree": uniform(0.5, 0.5),       # [0.5, 1.0]
-        "min_child_weight": randint(1, 11),          # [1, 10]
-        "reg_alpha": uniform(0.0, 1.0),              # L1
-        "reg_lambda": uniform(0.5, 4.5),             # L2 [0.5, 5.0]
+        "n_estimators": randint(100, 601),  # [100, 600]
+        "max_depth": randint(3, 10),  # [3, 9]
+        "learning_rate": uniform(0.01, 0.29),  # [0.01, 0.30]
+        "subsample": uniform(0.6, 0.4),  # [0.6, 1.0]
+        "colsample_bytree": uniform(0.5, 0.5),  # [0.5, 1.0]
+        "min_child_weight": randint(1, 11),  # [1, 10]
+        "reg_alpha": uniform(0.0, 1.0),  # L1
+        "reg_lambda": uniform(0.5, 4.5),  # L2 [0.5, 5.0]
     }
 
     search = RandomizedSearchCV(
@@ -124,6 +127,7 @@ def train_xgb(
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_metrics(metrics: dict[str, float], best_params: dict[str, Any]) -> None:
     """Serialise metrics and best params to reports/xgb_metrics.json."""

@@ -32,6 +32,7 @@ _DEFAULT_CONFIG = Path("config/labeling.yaml")
 # Config helpers
 # ---------------------------------------------------------------------------
 
+
 def load_config(config_path: str | Path = _DEFAULT_CONFIG) -> dict[str, Any]:
     """Load and return the labeling YAML configuration as a plain dict."""
     path = Path(config_path)
@@ -42,6 +43,7 @@ def load_config(config_path: str | Path = _DEFAULT_CONFIG) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Core labeling logic
 # ---------------------------------------------------------------------------
+
 
 def build_labels(
     df: pd.DataFrame,
@@ -82,9 +84,8 @@ def build_labels(
     df[date_col] = pd.to_datetime(df[date_col])
 
     # Isolate rows that are already a "bad" event
-    bad = (
-        df.loc[df[dpd_col] >= dpd_threshold, [loan_id_col, date_col]]
-        .rename(columns={date_col: "_event_date"})
+    bad = df.loc[df[dpd_col] >= dpd_threshold, [loan_id_col, date_col]].rename(
+        columns={date_col: "_event_date"}
     )
 
     if bad.empty:
@@ -99,15 +100,9 @@ def build_labels(
     obs["_horizon_end"] = obs[date_col] + pd.DateOffset(months=horizon_months)
 
     # Keep only bad events strictly after the observation date and within horizon
-    in_window = (obs["_event_date"] > obs[date_col]) & (
-        obs["_event_date"] <= obs["_horizon_end"]
-    )
+    in_window = (obs["_event_date"] > obs[date_col]) & (obs["_event_date"] <= obs["_horizon_end"])
 
-    flagged = (
-        obs.loc[in_window, [loan_id_col, date_col]]
-        .drop_duplicates()
-        .assign(label=1)
-    )
+    flagged = obs.loc[in_window, [loan_id_col, date_col]].drop_duplicates().assign(label=1)
 
     result = df.merge(flagged, on=[loan_id_col, date_col], how="left")
     result["label"] = result["label"].fillna(0).astype(int)
@@ -126,6 +121,7 @@ def build_labels(
 # ---------------------------------------------------------------------------
 # End-to-end pipeline entry point
 # ---------------------------------------------------------------------------
+
 
 def label_dataset(
     input_path: str | Path,

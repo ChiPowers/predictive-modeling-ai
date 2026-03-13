@@ -2,6 +2,7 @@
 
 Covers requirements VIZ-01 through SCEN-03.
 """
+
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
@@ -13,8 +14,8 @@ client = TestClient(api.app, raise_server_exceptions=False)
 # SCEN-02: Canonical preset values — spec reference for the JS SCENARIOS constant.
 EXPECTED_SCENARIOS = {
     "Prime Borrower": {"credit_score": 780, "orig_ltv": 65, "orig_dti": 25},
-    "Borderline":     {"credit_score": 700, "orig_ltv": 85, "orig_dti": 40},
-    "High Risk":      {"credit_score": 620, "orig_ltv": 97, "orig_dti": 49},
+    "Borderline": {"credit_score": 700, "orig_ltv": 85, "orig_dti": 40},
+    "High Risk": {"credit_score": 620, "orig_ltv": 97, "orig_dti": 49},
 }
 
 
@@ -76,7 +77,7 @@ def test_features_textarea_editable() -> None:
     # Ensure the textarea is present but not readonly
     assert 'name="features"' in res.text
     assert 'name="features" readonly' not in res.text
-    assert 'name="features" rows' in res.text or 'rows' in res.text
+    assert 'name="features" rows' in res.text or "rows" in res.text
 
 
 def test_score_narrative_still_present() -> None:

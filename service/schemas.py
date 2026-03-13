@@ -37,9 +37,7 @@ class ScoreRequest(BaseModel):
 class ScoreResponse(BaseModel):
     pd: float = Field(ge=0.0, le=1.0, description="Predicted probability of default")
     decision: str = Field(description="'default' or 'current'")
-    top_factors: list[Factor] = Field(
-        description="Top drivers (by |SHAP value|), descending"
-    )
+    top_factors: list[Factor] = Field(description="Top drivers (by |SHAP value|), descending")
 
 
 class BatchScoreRequest(BaseModel):

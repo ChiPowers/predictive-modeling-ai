@@ -1,4 +1,5 @@
 """Tests for training/train_xgb.py."""
+
 from __future__ import annotations
 
 import json
@@ -14,6 +15,7 @@ pytest.importorskip("xgboost", reason="xgboost not installed")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_data(n: int = 200, p: int = 10, seed: int = 0) -> tuple[Any, Any]:
     rng = np.random.default_rng(seed)
     X = rng.standard_normal((n, p))
@@ -24,6 +26,7 @@ def _make_data(n: int = 200, p: int = 10, seed: int = 0) -> tuple[Any, Any]:
 # ---------------------------------------------------------------------------
 # Unit tests
 # ---------------------------------------------------------------------------
+
 
 def test_train_xgb_returns_expected_keys(tmp_path, monkeypatch):
     """train_xgb returns a dict with model, best_params, metrics."""
@@ -70,8 +73,13 @@ def test_train_xgb_saves_model_artifact(tmp_path, monkeypatch):
     X, y = _make_data()
     split = int(0.8 * len(X))
     train_xgb(
-        X[:split], y[:split], X[split:], y[split:],
-        n_iter=2, cv=2, artifact_name="test_xgb",
+        X[:split],
+        y[:split],
+        X[split:],
+        y[split:],
+        n_iter=2,
+        cv=2,
+        artifact_name="test_xgb",
     )
 
     artifact = tmp_path / "models" / "artifacts" / "test_xgb.joblib"

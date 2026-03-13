@@ -1,4 +1,5 @@
 """Probability calibration for fitted classifiers."""
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -42,9 +43,7 @@ def calibrate(
     """
     log.info("Calibrating model with method='{}'", method)
 
-    calibrated = CalibratedClassifierCV(
-        estimator=_freeze(model), method=method
-    )
+    calibrated = CalibratedClassifierCV(estimator=_freeze(model), method=method)
     calibrated.fit(X_val, y_val)
 
     # ── Diagnostics — ECE before vs after ────────────────────────────────
@@ -68,6 +67,7 @@ def calibrate(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _freeze(model: Any) -> Any:
     """Return a frozen (non-refittable) view of *model*.
 
@@ -85,14 +85,14 @@ def _freeze(model: Any) -> Any:
         return model  # caller sets cv='prefit' via the legacy path
 
 
-def _ece(y_true: np.ndarray[Any, np.dtype[Any]], y_prob: np.ndarray[Any, np.dtype[Any]], n_bins: int = 10) -> float:
+def _ece(
+    y_true: np.ndarray[Any, np.dtype[Any]], y_prob: np.ndarray[Any, np.dtype[Any]], n_bins: int = 10
+) -> float:
     """Expected Calibration Error (uniform binning).
 
     ECE = Σ (|bin| / N) * |acc(bin) - conf(bin)|
     """
-    fraction_pos, mean_pred = calibration_curve(
-        y_true, y_prob, n_bins=n_bins, strategy="uniform"
-    )
+    fraction_pos, mean_pred = calibration_curve(y_true, y_prob, n_bins=n_bins, strategy="uniform")
     bin_counts = np.histogram(y_prob, bins=n_bins, range=(0.0, 1.0))[0]
     total = float(bin_counts.sum())
     if total == 0:
@@ -100,7 +100,5 @@ def _ece(y_true: np.ndarray[Any, np.dtype[Any]], y_prob: np.ndarray[Any, np.dtyp
     # bin_counts may have more bins than calibration_curve returns (empty bins dropped)
     active = bin_counts[bin_counts > 0]
     n_active = len(fraction_pos)
-    ece = float(
-        np.sum(active[:n_active] / total * np.abs(fraction_pos - mean_pred))
-    )
+    ece = float(np.sum(active[:n_active] / total * np.abs(fraction_pos - mean_pred)))
     return ece

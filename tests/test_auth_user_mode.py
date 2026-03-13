@@ -1,4 +1,5 @@
 """Tests for auth flow and user-scoped modeling endpoints."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -13,6 +13,7 @@ from training.train_baseline import _evaluate, run
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture()
 def features_parquet(tmp_path: Path) -> Path:
     rng = np.random.default_rng(7)
@@ -21,13 +22,15 @@ def features_parquet(tmp_path: Path) -> Path:
     X = rng.normal(size=(n, 3))
     logits = 0.9 * X[:, 0] - 0.5 * X[:, 1] + rng.normal(scale=0.3, size=n)
     y = (logits > 0).astype(int)
-    df = pd.DataFrame({
-        "date": dates,
-        "feature_1": X[:, 0],
-        "feature_2": X[:, 1],
-        "feature_3": X[:, 2],
-        "target": y,
-    })
+    df = pd.DataFrame(
+        {
+            "date": dates,
+            "feature_1": X[:, 0],
+            "feature_2": X[:, 1],
+            "feature_3": X[:, 2],
+            "target": y,
+        }
+    )
     path = tmp_path / "features.parquet"
     df.to_parquet(path, index=False)
     return path
@@ -48,6 +51,7 @@ CONFIG_PATH = Path(__file__).parent.parent / "config" / "training.yaml"
 # Tests
 # ---------------------------------------------------------------------------
 
+
 def test_run_returns_metrics_dict(features_parquet, tmp_path):
     metrics = run(features_parquet, CONFIG_PATH)
     assert isinstance(metrics, dict)
@@ -62,9 +66,9 @@ def test_auc_above_chance(features_parquet):
     metrics = run(features_parquet, CONFIG_PATH)
     # Synthetic data has a strong signal; all splits should beat 0.7
     for split in ("train", "val", "test"):
-        assert metrics[split]["auc_roc"] > 0.70, (
-            f"{split} AUC {metrics[split]['auc_roc']:.4f} not above 0.70"
-        )
+        assert (
+            metrics[split]["auc_roc"] > 0.70
+        ), f"{split} AUC {metrics[split]['auc_roc']:.4f} not above 0.70"
 
 
 def test_brier_below_naive(features_parquet):
@@ -73,9 +77,9 @@ def test_brier_below_naive(features_parquet):
     for split in ("train", "val", "test"):
         prevalence = metrics[split]["positive_rate"]
         naive_brier = prevalence * (1 - prevalence)
-        assert metrics[split]["brier_score"] < naive_brier, (
-            f"{split} Brier {metrics[split]['brier_score']:.4f} not below naive {naive_brier:.4f}"
-        )
+        assert (
+            metrics[split]["brier_score"] < naive_brier
+        ), f"{split} Brier {metrics[split]['brier_score']:.4f} not below naive {naive_brier:.4f}"
 
 
 def test_metrics_saved_to_reports(features_parquet):
@@ -121,7 +125,15 @@ def test_evaluate_returns_required_keys(features_parquet):
     pipe.fit(X, y)
 
     result = _evaluate(pipe, X, y, "test")
-    for key in ("auc_roc", "average_precision", "brier_score", "best_f1",
-                "best_precision", "best_recall", "best_threshold",
-                "n_samples", "positive_rate"):
+    for key in (
+        "auc_roc",
+        "average_precision",
+        "brier_score",
+        "best_f1",
+        "best_precision",
+        "best_recall",
+        "best_threshold",
+        "n_samples",
+        "positive_rate",
+    ):
         assert key in result, f"Missing key: {key}"

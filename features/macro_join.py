@@ -16,6 +16,7 @@ Usage
     # Performance data — monthly_reporting_period is also YYYYMM
     enriched = join_macro_features(df, date_col="monthly_reporting_period")
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -143,9 +144,7 @@ def join_macro_features(
 
     result = df.copy()
     for col in macro_cols:
-        result[col] = period_str_series.map(
-            lambda p, c=col: macro_lookup.get(p, {}).get(c)
-        )
+        result[col] = period_str_series.map(lambda p, c=col: macro_lookup.get(p, {}).get(c))
 
     null_rows = result[macro_cols].isna().any(axis=1).sum()
     if null_rows:

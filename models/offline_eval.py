@@ -56,8 +56,8 @@ class PolicyMetrics:
     decline_rate: float
 
     # Risk of the approved segment
-    mean_pd_approved: float          # mean PD of approved applicants
-    expected_loss_rate: float        # sum(PD × LGD, approved) / n_total
+    mean_pd_approved: float  # mean PD of approved applicants
+    expected_loss_rate: float  # sum(PD × LGD, approved) / n_total
 
     # Only populated when actual default labels are supplied
     actual_default_rate_approved: float | None = None
@@ -175,10 +175,7 @@ def compare_policies(
     list[PolicyMetrics]
         One :class:`PolicyMetrics` per policy, in input order.
     """
-    results = [
-        evaluate_policy(policy, pd_scores, actual_defaults, lgd)
-        for policy in policies
-    ]
+    results = [evaluate_policy(policy, pd_scores, actual_defaults, lgd) for policy in policies]
 
     dataset_info = {
         "n": len(pd_scores),
@@ -279,11 +276,7 @@ def _write_markdown(
     lines += [header, sep]
 
     for r in results:
-        row = (
-            f"| {r.policy_name} "
-            f"| {r.mean_pd_approved:.4f} "
-            f"| {r.expected_loss_rate:.4f}"
-        )
+        row = f"| {r.policy_name} " f"| {r.mean_pd_approved:.4f} " f"| {r.expected_loss_rate:.4f}"
         if has_actuals:
             adr = (
                 f"{r.actual_default_rate_approved:.2%}"
@@ -346,9 +339,7 @@ def _make_synthetic_dataset(n: int = 5000, seed: int = 42) -> tuple[list[float],
         # Clamp to a sensible range
         pd_scores.append(min(max(x, 0.001), 0.999))
 
-    actual_defaults: list[int] = [
-        1 if random.random() < p else 0 for p in pd_scores
-    ]
+    actual_defaults: list[int] = [1 if random.random() < p else 0 for p in pd_scores]
     return pd_scores, actual_defaults
 
 
@@ -397,7 +388,9 @@ if __name__ == "__main__":
     print(f"  {reports_dir}/policy_comparison.md\n")
 
     # Print summary table to stdout
-    print(f"{'Policy':<12} {'Approve':>8} {'Review':>8} {'Decline':>8} {'Mean PD':>10} {'Exp Loss':>10}")
+    print(
+        f"{'Policy':<12} {'Approve':>8} {'Review':>8} {'Decline':>8} {'Mean PD':>10} {'Exp Loss':>10}"
+    )
     print("-" * 60)
     for r in results:
         print(

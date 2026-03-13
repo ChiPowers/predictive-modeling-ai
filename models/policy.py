@@ -56,12 +56,8 @@ class PolicyThresholds:
 
     def __post_init__(self) -> None:
         if not (0.0 < self.approve_threshold < self.decline_threshold < 1.0):
-            raise ValueError(
-                "Must satisfy: 0 < approve_threshold < decline_threshold < 1"
-            )
-        if self.review_capacity is not None and not (
-            0.0 < self.review_capacity <= 1.0
-        ):
+            raise ValueError("Must satisfy: 0 < approve_threshold < decline_threshold < 1")
+        if self.review_capacity is not None and not (0.0 < self.review_capacity <= 1.0):
             raise ValueError("review_capacity must be in (0, 1]")
 
 

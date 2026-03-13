@@ -1,4 +1,5 @@
 """Generate synthetic Fannie-like combined files for demo environments."""
+
 from __future__ import annotations
 
 import random
@@ -115,7 +116,9 @@ def seed_demo_data(
                 vals[39] = str(min(6, 1 + (m - default_start)))
             else:
                 vals[39] = "0"
-            vals[41] = "Y" if (loan_default and m >= default_start + 3 and rng.random() < 0.15) else "N"
+            vals[41] = (
+                "Y" if (loan_default and m >= default_start + 3 and rng.random() < 0.15) else "N"
+            )
             rows.append("|".join(vals))
 
     out_path.write_text("\n".join(rows) + "\n", encoding="latin-1")

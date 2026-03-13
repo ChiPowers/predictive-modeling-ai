@@ -10,6 +10,7 @@ Usage:
 Or via the installed script:
     pmai ingest --source <name>
 """
+
 from __future__ import annotations
 
 import typer
@@ -45,7 +46,9 @@ def main(ctx: typer.Context) -> None:
 
 @app.command()
 def ingest(
-    source: str = typer.Option(..., help="Dataset source key (e.g. 'fred', 'csv:path/to/file.csv')"),
+    source: str = typer.Option(
+        ..., help="Dataset source key (e.g. 'fred', 'csv:path/to/file.csv')"
+    ),
 ) -> None:
     """Download and persist a raw dataset."""
     from data_ingestion.loader import load
@@ -69,7 +72,9 @@ def features(
 
 @app.command()
 def train(
-    model: str = typer.Option("prophet", help="Model identifier (prophet | sklearn-logreg | sklearn-rf)"),
+    model: str = typer.Option(
+        "prophet", help="Model identifier (prophet | sklearn-logreg | sklearn-rf)"
+    ),
     run_name: str | None = typer.Option(None, "--run-name", help="MLflow run label"),
     experiment_name: str | None = typer.Option(
         None, "--experiment-name", help="MLflow experiment name (overrides settings)"

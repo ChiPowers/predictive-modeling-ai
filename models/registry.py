@@ -1,4 +1,5 @@
 """Local model registry with version history and active-model alias."""
+
 from __future__ import annotations
 
 import hashlib
@@ -99,7 +100,12 @@ def save(
     if set_active:
         activate(name, version_id, namespace=namespace)
 
-    log.info("Model saved: ns={} alias={} version={}", namespace or "global", alias_path, version_filename)
+    log.info(
+        "Model saved: ns={} alias={} version={}",
+        namespace or "global",
+        alias_path,
+        version_filename,
+    )
     return alias_path
 
 
@@ -134,15 +140,19 @@ def list_models(namespace: str | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for name, versions in manifest.get("models", {}).items():
         latest_version = latest_map.get(name)
-        out.append({
-            "name": name,
-            "version_count": len(versions),
-            "latest_version_id": latest_version,
-        })
+        out.append(
+            {
+                "name": name,
+                "version_count": len(versions),
+                "latest_version_id": latest_version,
+            }
+        )
     return sorted(out, key=lambda m: m["name"])
 
 
-def activate(name: str, version_id: str | None = None, *, namespace: str | None = None) -> dict[str, Any]:
+def activate(
+    name: str, version_id: str | None = None, *, namespace: str | None = None
+) -> dict[str, Any]:
     """Set active model alias and write `current.joblib`."""
     versions = get_versions(name, namespace=namespace)
     if not versions:
@@ -170,7 +180,13 @@ def activate(name: str, version_id: str | None = None, *, namespace: str | None 
         "namespace": namespace,
     }
     _active_path(namespace).write_text(json.dumps(active, indent=2))
-    log.info("Activated model ns={} {}:{} -> {}", namespace or "global", name, target["version_id"], current_path)
+    log.info(
+        "Activated model ns={} {}:{} -> {}",
+        namespace or "global",
+        name,
+        target["version_id"],
+        current_path,
+    )
     return active
 
 

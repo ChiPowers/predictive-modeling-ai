@@ -21,6 +21,7 @@ Usage
     # CLI-style (reads from processed parquet by source key)
     run("fannie-mae")
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -70,7 +71,8 @@ def build_features(
     # ── Leakage guard: sort performance by (loan, period) before any feature ─
     if performance_df is not None and not performance_df.empty:
         sort_cols = [
-            c for c in ["loan_sequence_number", "monthly_reporting_period"]
+            c
+            for c in ["loan_sequence_number", "monthly_reporting_period"]
             if c in performance_df.columns
         ]
         if sort_cols:
@@ -78,15 +80,31 @@ def build_features(
 
     # ── Start with raw origination columns (numeric ones will be coerced) ─
     numeric_orig_cols = [
-        "credit_score", "orig_ltv", "orig_cltv", "orig_dti",
-        "orig_upb", "orig_interest_rate", "orig_loan_term",
-        "num_units", "num_borrowers",
+        "credit_score",
+        "orig_ltv",
+        "orig_cltv",
+        "orig_dti",
+        "orig_upb",
+        "orig_interest_rate",
+        "orig_loan_term",
+        "num_units",
+        "num_borrowers",
     ]
     result = origination_df[
-        [c for c in numeric_orig_cols + [
-            "first_time_homebuyer_flag", "amortization_type", "occupancy_status",
-            "loan_purpose", "channel", "property_type", "loan_sequence_number",
-        ] if c in origination_df.columns]
+        [
+            c
+            for c in numeric_orig_cols
+            + [
+                "first_time_homebuyer_flag",
+                "amortization_type",
+                "occupancy_status",
+                "loan_purpose",
+                "channel",
+                "property_type",
+                "loan_sequence_number",
+            ]
+            if c in origination_df.columns
+        ]
     ].copy()
 
     for col in numeric_orig_cols:
@@ -130,7 +148,9 @@ def build_features(
                 else:
                     log.debug(
                         "Feature '{}' length mismatch ({} vs {}) — skipping",
-                        spec.name, len(out), len(result),
+                        spec.name,
+                        len(out),
+                        len(result),
                     )
 
     # ── Clip outliers ─────────────────────────────────────────────────────
@@ -144,7 +164,9 @@ def build_features(
 
     log.info(
         "build_features complete: {} rows, {} columns, groups={}",
-        len(result), result.shape[1], enabled,
+        len(result),
+        result.shape[1],
+        enabled,
     )
     return result
 
@@ -236,7 +258,9 @@ def run(source: str, groups: list[str] | None = None) -> pd.DataFrame:
         features = build_features(orig_df, perf_df, groups=groups)
         out_path = out_dir / "features.parquet"
         features.to_parquet(out_path, index=False, engine="pyarrow")
-        log.info("Features written → {} ({} rows, {} cols)", out_path, len(features), features.shape[1])
+        log.info(
+            "Features written → {} ({} rows, {} cols)", out_path, len(features), features.shape[1]
+        )
         return features
 
     raise ValueError(f"No feature pipeline defined for source='{source}'")

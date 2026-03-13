@@ -10,6 +10,7 @@ results = run_feature_drift(
     output_dir=Path("reports/monitoring"),
 )
 """
+
 from __future__ import annotations
 
 import json
@@ -40,7 +41,9 @@ PSI_ALERT = 0.25
 KS_ALPHA = 0.05
 
 
-def _equal_freq_edges(reference: np.ndarray[Any, np.dtype[Any]], n_bins: int) -> np.ndarray[Any, np.dtype[Any]]:
+def _equal_freq_edges(
+    reference: np.ndarray[Any, np.dtype[Any]], n_bins: int
+) -> np.ndarray[Any, np.dtype[Any]]:
     """Return bin edges derived from reference-distribution quantiles."""
     percentiles = np.linspace(0, 100, n_bins + 1)
     edges = np.nanpercentile(reference, percentiles)

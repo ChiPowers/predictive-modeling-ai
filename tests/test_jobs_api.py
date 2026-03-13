@@ -1,4 +1,5 @@
 """API tests for background job orchestration endpoints."""
+
 from __future__ import annotations
 
 import time
@@ -32,7 +33,9 @@ def isolated_jobs(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_train_job_succeeds(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None) -> None:
     import training.trainer as trainer
 
-    monkeypatch.setattr(trainer, "train_model", lambda *args, **kwargs: Path("models/artifacts/mock.joblib"))
+    monkeypatch.setattr(
+        trainer, "train_model", lambda *args, **kwargs: Path("models/artifacts/mock.joblib")
+    )
     client = TestClient(api.app, raise_server_exceptions=False)
 
     created = client.post("/jobs/train", json={"model": "sklearn-rf"})
@@ -63,10 +66,14 @@ def test_train_job_failure(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None)
     assert "simulated failure" in final["error"]
 
 
-def test_list_jobs_contains_submitted_job(monkeypatch: pytest.MonkeyPatch, isolated_jobs: None) -> None:
+def test_list_jobs_contains_submitted_job(
+    monkeypatch: pytest.MonkeyPatch, isolated_jobs: None
+) -> None:
     import training.trainer as trainer
 
-    monkeypatch.setattr(trainer, "train_model", lambda *args, **kwargs: Path("models/artifacts/mock.joblib"))
+    monkeypatch.setattr(
+        trainer, "train_model", lambda *args, **kwargs: Path("models/artifacts/mock.joblib")
+    )
     client = TestClient(api.app, raise_server_exceptions=False)
 
     created = client.post("/jobs/train", json={"model": "prophet"})

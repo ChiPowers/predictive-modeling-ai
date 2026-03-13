@@ -1,4 +1,5 @@
 """Tests for models.registry: save, load, and predict cycle."""
+
 from __future__ import annotations
 
 from pathlib import Path

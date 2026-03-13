@@ -20,6 +20,7 @@ Usage (programmatic)
     df = ingest_fred()                  # use cached parquet if present
     df = ingest_fred(overwrite=True)    # re-download all series
 """
+
 from __future__ import annotations
 
 import io
@@ -236,8 +237,7 @@ def ingest_fred(
 
     if not monthly_frames:
         raise RuntimeError(
-            "No FRED series could be fetched. "
-            "Check network access and config/fred.yaml."
+            "No FRED series could be fetched. " "Check network access and config/fred.yaml."
         )
 
     macro_df = pd.concat(monthly_frames, axis=1)

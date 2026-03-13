@@ -1,4 +1,5 @@
 """Simple local auth for user-scoped modeling workflows."""
+
 from __future__ import annotations
 
 import base64
@@ -86,7 +87,9 @@ def issue_token(username: str) -> str:
         "exp": now + int(settings.auth_token_ttl_minutes) * 60,
     }
     payload_b64 = _b64url_encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
-    sig = hmac.new(settings.auth_secret.encode("utf-8"), payload_b64.encode("utf-8"), hashlib.sha256)
+    sig = hmac.new(
+        settings.auth_secret.encode("utf-8"), payload_b64.encode("utf-8"), hashlib.sha256
+    )
     signature_b64 = _b64url_encode(sig.digest())
     return f"{payload_b64}.{signature_b64}"
 
@@ -106,7 +109,9 @@ def decode_token(token: str) -> dict[str, Any]:
     if not hmac.compare_digest(expected_b64, sig_b64):
         raise ValueError("Invalid token signature")
 
-    payload: dict[str, Any] = cast(dict[str, Any], json.loads(_b64url_decode(payload_b64).decode("utf-8")))
+    payload: dict[str, Any] = cast(
+        dict[str, Any], json.loads(_b64url_decode(payload_b64).decode("utf-8"))
+    )
     if int(payload.get("exp", 0)) < int(time.time()):
         raise ValueError("Token expired")
     return payload

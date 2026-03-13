@@ -21,6 +21,7 @@ Usage (programmatic)
     ingest_origination()
     ingest_performance()
 """
+
 from __future__ import annotations
 
 import re
@@ -116,7 +117,9 @@ def _filter_quarters(paths: list[Path], quarters: list[str]) -> list[Path]:
     return [p for p in paths if _quarter_from_path(p).upper() in wanted]
 
 
-def _extract_by_index(raw: pd.DataFrame, columns: list[str], idx_map: dict[str, int]) -> pd.DataFrame:
+def _extract_by_index(
+    raw: pd.DataFrame, columns: list[str], idx_map: dict[str, int]
+) -> pd.DataFrame:
     out = pd.DataFrame(index=raw.index)
     for col in columns:
         idx = idx_map.get(col)
@@ -138,7 +141,7 @@ def _read_raw_chunk(
         sep=cfg["delimiter"],
         header=None,
         names=columns,
-        dtype=str,          # read everything as str first; schema will coerce
+        dtype=str,  # read everything as str first; schema will coerce
         encoding=cfg["encoding"],
         low_memory=False,
     )
@@ -309,7 +312,9 @@ def ingest_performance(
                 chunk = _validate(chunk, PERFORMANCE_SCHEMA, f"{src.name}[chunk {i}]")
             chunks.append(chunk)
             if (i + 1) % 10 == 0:
-                log.debug("  … processed {:,} chunks ({:,} rows so far)", i + 1, (i + 1) * chunk_size)
+                log.debug(
+                    "  … processed {:,} chunks ({:,} rows so far)", i + 1, (i + 1) * chunk_size
+                )
 
         if not chunks:
             log.warning("Performance file {} appears empty, skipping", src.name)

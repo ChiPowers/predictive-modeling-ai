@@ -23,6 +23,7 @@ Usage
     train_model("sklearn-logreg", run_name="baseline-v1")
     train_model("sklearn-rf", experiment_name="pd-experiments")
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -183,16 +184,20 @@ def train_model(
 
     log.info(
         "train_model called: model={} experiment={} run_name={}",
-        model, experiment_name, run_name,
+        model,
+        experiment_name,
+        run_name,
     )
 
     with mlflow.start_run(run_name=run_name) as run:
-        mlflow.log_params({
-            "model": model,
-            "random_seed": settings.random_seed,
-            "test_split": settings.test_split,
-            "forecast_horizon": settings.forecast_horizon,
-        })
+        mlflow.log_params(
+            {
+                "model": model,
+                "random_seed": settings.random_seed,
+                "test_split": settings.test_split,
+                "forecast_horizon": settings.forecast_horizon,
+            }
+        )
 
         if model == "prophet":
             if namespace is None:
@@ -252,11 +257,13 @@ def _file_lineage(paths: list[Path]) -> list[dict[str, Any]]:
                 if not block:
                     break
                 h.update(block)
-        records.append({
-            "path": str(path),
-            "size_bytes": path.stat().st_size,
-            "sha256": h.hexdigest(),
-        })
+        records.append(
+            {
+                "path": str(path),
+                "size_bytes": path.stat().st_size,
+                "sha256": h.hexdigest(),
+            }
+        )
     return records
 
 
@@ -444,7 +451,11 @@ def _train_sklearn(
 
     if settings.low_memory_mode and len(X) > settings.low_memory_max_train_rows:
         max_rows = settings.low_memory_max_train_rows
-        log.info("Low-memory mode enabled: downsampling training frame from {:,} to {:,} rows", len(X), max_rows)
+        log.info(
+            "Low-memory mode enabled: downsampling training frame from {:,} to {:,} rows",
+            len(X),
+            max_rows,
+        )
         if y.nunique(dropna=True) > 1:
             sample_idx = (
                 pd.DataFrame({"idx": X.index, "y": y})
@@ -460,23 +471,24 @@ def _train_sklearn(
             sample_idx = sample_idx[:max_rows]
         else:
             sample_idx = (
-                pd.Series(X.index)
-                .sample(n=max_rows, random_state=settings.random_seed)
-                .tolist()
+                pd.Series(X.index).sample(n=max_rows, random_state=settings.random_seed).tolist()
             )
         X = X.loc[sample_idx].copy()
         y = y.loc[sample_idx].copy()
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
+        X,
+        y,
         test_size=settings.test_split,
         random_state=settings.random_seed,
         stratify=y,
     )
     log.info(
         "Train/test split: {:,} train / {:,} test (default rate: train={:.2%} test={:.2%})",
-        len(X_train), len(X_test),
-        y_train.mean(), y_test.mean(),
+        len(X_train),
+        len(X_test),
+        y_train.mean(),
+        y_test.mean(),
     )
 
     pipeline = _build_pd_pipeline(use_rf)

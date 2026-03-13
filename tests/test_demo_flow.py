@@ -4,6 +4,7 @@ Covers requirements DEMO-01..04 and PORT-01..03.
 Structural HTML tests (7) will FAIL until Plan 02 modifies index.html.
 Backend tests (2) will PASS after Task 2 adds the batch prompt branch.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -168,8 +169,16 @@ def test_ai_interpret_batch_context() -> None:
             "context_type": "batch",
             "data": {
                 "results": [
-                    {"pd": 0.34, "decision": "current", "top_factors": [{"name": "orig_ltv", "value": 0.12}]},
-                    {"pd": 0.72, "decision": "default", "top_factors": [{"name": "orig_dti", "value": 0.18}]},
+                    {
+                        "pd": 0.34,
+                        "decision": "current",
+                        "top_factors": [{"name": "orig_ltv", "value": 0.12}],
+                    },
+                    {
+                        "pd": 0.72,
+                        "decision": "default",
+                        "top_factors": [{"name": "orig_dti", "value": 0.18}],
+                    },
                 ],
                 "count": 2,
             },

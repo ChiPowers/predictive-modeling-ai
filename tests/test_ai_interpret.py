@@ -4,9 +4,10 @@ These tests are intentionally RED in Plan 01 — the endpoint does not exist yet
 They define expected behaviors for AI-01 through AI-05 requirements.
 Tests will pass (GREEN) after Plan 02 implements the endpoint.
 """
+
 from __future__ import annotations
 
-from typing import Any, Generator
+from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import anthropic
@@ -171,9 +172,7 @@ def test_score_narrative_prompt_contains_pd(mock_anthropic_client: MagicMock) ->
     messages = kwargs.get("messages", [])
     assert len(messages) > 0, "No messages were passed to Claude"
 
-    prompt_text = " ".join(
-        m["content"] for m in messages if isinstance(m.get("content"), str)
-    )
+    prompt_text = " ".join(m["content"] for m in messages if isinstance(m.get("content"), str))
     # pd=0.34 should appear as "34%" in the prompt
     assert "34%" in prompt_text, f"Expected '34%' in prompt, got: {prompt_text!r}"
 
@@ -193,9 +192,7 @@ def test_forecast_narrative_prompt_contains_threshold(mock_anthropic_client: Mag
     messages = kwargs.get("messages", [])
     assert len(messages) > 0, "No messages were passed to Claude"
 
-    prompt_text = " ".join(
-        m["content"] for m in messages if isinstance(m.get("content"), str)
-    )
+    prompt_text = " ".join(m["content"] for m in messages if isinstance(m.get("content"), str))
     # threshold=0.20 should appear in prompt (as "20%" or "0.20" or "0.2")
     assert any(
         token in prompt_text for token in ("20%", "0.20", "0.2", "threshold")
@@ -217,9 +214,7 @@ def test_monitoring_narrative_prompt_reflects_drift(mock_anthropic_client: Magic
     messages = kwargs.get("messages", [])
     assert len(messages) > 0, "No messages were passed to Claude"
 
-    prompt_text = " ".join(
-        m["content"] for m in messages if isinstance(m.get("content"), str)
-    )
+    prompt_text = " ".join(m["content"] for m in messages if isinstance(m.get("content"), str))
     # drift info from MONITORING_DATA: PSI 0.25, alert True, AUC 0.74
     assert any(
         token in prompt_text for token in ("drift", "psi", "PSI", "0.25", "alert")

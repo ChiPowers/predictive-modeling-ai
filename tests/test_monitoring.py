@@ -1,4 +1,5 @@
 """Tests for monitoring modules: drift, score_drift, perf_drift."""
+
 from __future__ import annotations
 
 import json
@@ -65,7 +66,9 @@ def perf_data() -> tuple[pd.Series, pd.Series, pd.Series]:
 
 
 class TestPSI:
-    def test_identical_distributions_near_zero(self, stable_series: tuple[pd.Series, pd.Series]) -> None:
+    def test_identical_distributions_near_zero(
+        self, stable_series: tuple[pd.Series, pd.Series]
+    ) -> None:
         from monitoring.drift import psi
 
         ref, cur = stable_series
@@ -102,7 +105,9 @@ class TestPSI:
 
 
 class TestKSTest:
-    def test_same_distribution_high_pvalue(self, stable_series: tuple[pd.Series, pd.Series]) -> None:
+    def test_same_distribution_high_pvalue(
+        self, stable_series: tuple[pd.Series, pd.Series]
+    ) -> None:
         from monitoring.drift import ks_test
 
         ref, cur = stable_series
@@ -143,9 +148,7 @@ class TestRunFeatureDrift:
         for feat in KEY_NUMERIC_FEATURES:
             assert feat in results
 
-    def test_result_schema(
-        self, stable_origination_dfs: tuple[pd.DataFrame, pd.DataFrame]
-    ) -> None:
+    def test_result_schema(self, stable_origination_dfs: tuple[pd.DataFrame, pd.DataFrame]) -> None:
         from monitoring.drift import run_feature_drift
 
         ref, cur = stable_origination_dfs
@@ -207,9 +210,14 @@ class TestRunScoreDrift:
         ref, cur = stable_series
         result = run_score_drift(ref, cur)
         expected_keys = {
-            "psi", "ks_statistic", "ks_p_value",
-            "reference_percentiles", "current_percentiles",
-            "mean_shift", "severity", "alert",
+            "psi",
+            "ks_statistic",
+            "ks_p_value",
+            "reference_percentiles",
+            "current_percentiles",
+            "mean_shift",
+            "severity",
+            "alert",
         }
         assert expected_keys.issubset(result.keys())
 
@@ -222,9 +230,7 @@ class TestRunScoreDrift:
             assert key in result["reference_percentiles"]
             assert key in result["current_percentiles"]
 
-    def test_writes_json(
-        self, tmp_path: Path, stable_series: tuple[pd.Series, pd.Series]
-    ) -> None:
+    def test_writes_json(self, tmp_path: Path, stable_series: tuple[pd.Series, pd.Series]) -> None:
         from monitoring.score_drift import run_score_drift
 
         ref, cur = stable_series
@@ -247,9 +253,7 @@ class TestRollingAUC:
         result = rolling_auc(labels, scores, periods, window=3)
         assert len(result) == periods.nunique()
 
-    def test_auc_in_valid_range(
-        self, perf_data: tuple[pd.Series, pd.Series, pd.Series]
-    ) -> None:
+    def test_auc_in_valid_range(self, perf_data: tuple[pd.Series, pd.Series, pd.Series]) -> None:
         from monitoring.perf_drift import rolling_auc
 
         labels, scores, periods = perf_data
@@ -268,9 +272,7 @@ class TestRollingAUC:
 
 
 class TestRunPerfDrift:
-    def test_output_schema(
-        self, perf_data: tuple[pd.Series, pd.Series, pd.Series]
-    ) -> None:
+    def test_output_schema(self, perf_data: tuple[pd.Series, pd.Series, pd.Series]) -> None:
         from monitoring.perf_drift import run_perf_drift
 
         labels, scores, periods = perf_data
@@ -289,9 +291,7 @@ class TestRunPerfDrift:
         result = run_perf_drift(labels, scores, periods, auc_alert_threshold=0.0)
         assert result["alert"] is False
 
-    def test_below_threshold_alert(
-        self, perf_data: tuple[pd.Series, pd.Series, pd.Series]
-    ) -> None:
+    def test_below_threshold_alert(self, perf_data: tuple[pd.Series, pd.Series, pd.Series]) -> None:
         from monitoring.perf_drift import run_perf_drift
 
         labels, scores, periods = perf_data
@@ -331,8 +331,20 @@ class TestWriteSummaryReport:
                 "psi": 0.08,
                 "ks_statistic": 0.04,
                 "ks_p_value": 0.30,
-                "reference_percentiles": {"p10": 0.1, "p25": 0.2, "p50": 0.3, "p75": 0.4, "p90": 0.5},
-                "current_percentiles": {"p10": 0.11, "p25": 0.21, "p50": 0.31, "p75": 0.41, "p90": 0.51},
+                "reference_percentiles": {
+                    "p10": 0.1,
+                    "p25": 0.2,
+                    "p50": 0.3,
+                    "p75": 0.4,
+                    "p90": 0.5,
+                },
+                "current_percentiles": {
+                    "p10": 0.11,
+                    "p25": 0.21,
+                    "p50": 0.31,
+                    "p75": 0.41,
+                    "p90": 0.51,
+                },
                 "mean_shift": 0.01,
                 "severity": "ok",
                 "alert": False,

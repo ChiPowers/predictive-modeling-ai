@@ -1,4 +1,5 @@
 """Tests for config.settings."""
+
 from __future__ import annotations
 
 

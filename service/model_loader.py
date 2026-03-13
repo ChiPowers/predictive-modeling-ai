@@ -35,7 +35,11 @@ class ModelLoader:
             raise FileNotFoundError(f"Model artifact not found: {path}")
 
         self._model = joblib.load(path)
-        self._predictor = self._model["pipeline"] if isinstance(self._model, dict) and "pipeline" in self._model else self._model
+        self._predictor = (
+            self._model["pipeline"]
+            if isinstance(self._model, dict) and "pipeline" in self._model
+            else self._model
+        )
 
         # Capture feature names from the model if available
         if isinstance(self._model, dict) and isinstance(self._model.get("feature_cols"), list):
@@ -192,7 +196,9 @@ class ModelLoader:
         pd_scores = self._predict_proba(combined)
 
         results: list[tuple[float, str, list[Factor]]] = []
-        for i, ((_features, threshold), pd_score) in enumerate(zip(records, pd_scores, strict=False)):
+        for i, ((_features, threshold), pd_score) in enumerate(
+            zip(records, pd_scores, strict=False)
+        ):
             decision = "default" if pd_score >= threshold else "current"
             row_df = combined.iloc[[i]]
             factors = self._top_factors(row_df)
