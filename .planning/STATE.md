@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-03-PLAN.md — runFullDemo() orchestration in app.js
-last_updated: "2026-03-13T03:15:20.055Z"
+stopped_at: "Completed 03-04-PLAN.md — portfolio dashboard: renderPortfolioTable, renderDonutChart, initBatchForm update"
+last_updated: "2026-03-13T03:19:58.528Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 33
 ---
 
@@ -60,6 +60,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-score-panel-redesign P03 | 5 | 2 tasks | 0 files |
 | Phase 03-demo-flow-portfolio-dashboard P02 | 15 | 2 tasks | 3 files |
 | Phase 03-demo-flow-portfolio-dashboard P03 | 7 | 2 tasks | 1 files |
+| Phase 03-demo-flow-portfolio-dashboard P04 | 3 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ Recent decisions affecting current work:
 - [Phase 03-demo-flow-portfolio-dashboard]: batchView pre replaced with three semantic containers (#portfolioTable, #portfolioDonut, #batchNarrative) for independent rendering
 - [Phase 03-demo-flow-portfolio-dashboard]: runFullDemo() uses SCENARIOS['Prime Borrower'] for score step — fixed scenario for repeatable demo
 - [Phase 03-demo-flow-portfolio-dashboard]: bootstrap() calls initDemoButton() first so demo button is always wired before other form handlers
+- [Phase 03-demo-flow-portfolio-dashboard]: portfolioSort is module-level so sort state persists across header-click re-renders
+- [Phase 03-demo-flow-portfolio-dashboard]: Degenerate single-tier donut uses SVG circle not arc path to avoid 360-degree edge case
+- [Phase 03-demo-flow-portfolio-dashboard]: Tier colors use inline hex fills in SVG for cross-browser fill attribute compatibility
 
 ### Pending Todos
 
@@ -105,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T03:15:20.054Z
-Stopped at: Completed 03-03-PLAN.md — runFullDemo() orchestration in app.js
+Last session: 2026-03-13T03:19:58.526Z
+Stopped at: Completed 03-04-PLAN.md — portfolio dashboard: renderPortfolioTable, renderDonutChart, initBatchForm update
 Resume file: None
