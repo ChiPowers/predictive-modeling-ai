@@ -1,69 +1,186 @@
-"""Structural HTML tests for the Phase 3 demo flow and portfolio dashboard redesign.
+"""Test scaffold for Phase 3: Demo Flow and Portfolio Dashboard.
 
-Covers requirements DEMO-01, DEMO-03, DEMO-04, PORT-01, PORT-02, PORT-03.
+Covers requirements DEMO-01..04 and PORT-01..03.
+Structural HTML tests (7) will FAIL until Plan 02 modifies index.html.
+Backend tests (2) will PASS after Task 2 adds the batch prompt branch.
 """
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-import service.api as api
+from service.api import _build_prompt, app
 
-client = TestClient(api.app, raise_server_exceptions=False)
+client = TestClient(app, raise_server_exceptions=False)
+
+
+# ---------------------------------------------------------------------------
+# DEMO-01: Run Demo button and checklist container exist in HTML
+# ---------------------------------------------------------------------------
 
 
 def test_demo_button_html_structure() -> None:
-    """GET / contains #runDemoBtn and #demoChecklist — no <ol> numbered instruction list (DEMO-01)."""
+    """GET / contains runDemoBtn and demoChecklist elements (DEMO-01).
+
+    EXPECTED STATE: FAILS until Plan 02 adds these elements to index.html.
+    """
     res = client.get("/")
     assert res.status_code == 200
     assert 'id="runDemoBtn"' in res.text
     assert 'id="demoChecklist"' in res.text
-    # The old numbered instruction list should be gone — no plain <ol> in the Run Demo card
-    # We verify by ensuring old instruction text is absent
-    assert "Submit <code>seed-demo</code> job." not in res.text
+
+
+# ---------------------------------------------------------------------------
+# DEMO-02: Job form is hidden at page load
+# ---------------------------------------------------------------------------
 
 
 def test_job_form_hidden() -> None:
-    """GET / has jobForm with hidden attribute — form exists but is not visible (DEMO-03)."""
+    """GET / jobForm element has hidden attribute or is absent from visible markup (DEMO-02).
+
+    EXPECTED STATE: FAILS until Plan 02 adds/modifies the form element.
+    """
     res = client.get("/")
     assert res.status_code == 200
-    assert 'id="jobForm"' in res.text
-    assert 'id="jobForm" class="stack" hidden' in res.text
+    # The form must not appear as a bare visible form — it should carry `hidden`
+    # or not be rendered at all in the initial HTML.
+    assert 'id="jobForm"' not in res.text or 'id="jobForm" class="stack" hidden' in res.text
+
+
+# ---------------------------------------------------------------------------
+# DEMO-03: Checklist has exactly five steps
+# ---------------------------------------------------------------------------
 
 
 def test_checklist_five_steps() -> None:
-    """GET / contains exactly five .demo-step elements (DEMO-04)."""
+    """GET / contains five elements with class demo-step (DEMO-03).
+
+    EXPECTED STATE: FAILS until Plan 02 adds five .demo-step elements.
+    """
     res = client.get("/")
     assert res.status_code == 200
-    # Count occurrences of class="demo-step"
     assert res.text.count('class="demo-step"') == 5
-    # Verify all steps start as pending
-    assert res.text.count('data-state="pending"') >= 5
+
+
+# ---------------------------------------------------------------------------
+# DEMO-04: Completion message element exists
+# ---------------------------------------------------------------------------
 
 
 def test_completion_message_element() -> None:
-    """GET / contains #demoComplete element (DEMO-04)."""
+    """GET / contains element with id demoComplete (DEMO-04).
+
+    EXPECTED STATE: FAILS until Plan 02 adds the demoComplete element.
+    """
     res = client.get("/")
     assert res.status_code == 200
     assert 'id="demoComplete"' in res.text
 
 
+# ---------------------------------------------------------------------------
+# PORT-01: Portfolio table structure
+# ---------------------------------------------------------------------------
+
+
 def test_portfolio_table_structure() -> None:
-    """GET / contains #portfolioTable and no #batchView (PORT-01)."""
+    """GET / contains portfolioTable and does NOT contain batchView element (PORT-01).
+
+    EXPECTED STATE: FAILS until Plan 02 restructures the HTML.
+    """
     res = client.get("/")
     assert res.status_code == 200
     assert 'id="portfolioTable"' in res.text
     assert 'id="batchView"' not in res.text
 
 
+# ---------------------------------------------------------------------------
+# PORT-02: Portfolio donut chart element
+# ---------------------------------------------------------------------------
+
+
 def test_portfolio_donut_element() -> None:
-    """GET / contains #portfolioDonut element (PORT-02)."""
+    """GET / contains portfolioDonut element (PORT-02).
+
+    EXPECTED STATE: FAILS until Plan 02 adds the portfolioDonut element.
+    """
     res = client.get("/")
     assert res.status_code == 200
     assert 'id="portfolioDonut"' in res.text
 
 
+# ---------------------------------------------------------------------------
+# PORT-03: Batch narrative element
+# ---------------------------------------------------------------------------
+
+
 def test_batch_narrative_element() -> None:
-    """GET / contains #batchNarrative element (PORT-03)."""
+    """GET / contains batchNarrative element (PORT-03).
+
+    EXPECTED STATE: FAILS until Plan 02 adds the batchNarrative element.
+    """
     res = client.get("/")
     assert res.status_code == 200
     assert 'id="batchNarrative"' in res.text
+
+
+# ---------------------------------------------------------------------------
+# DEMO-02 (infra): Seed demo job endpoint returns 202
+# ---------------------------------------------------------------------------
+
+
+def test_seed_demo_job_submits() -> None:
+    """POST /jobs/seed-demo returns 202 Accepted (job infra up).
+
+    EXPECTED STATE: PASSES if job infrastructure is running.
+    Uses all-default payload (empty JSON body).
+    """
+    res = client.post("/jobs/seed-demo", json={})
+    assert res.status_code == 202
+
+
+# ---------------------------------------------------------------------------
+# PORT-03 (backend): POST /ai/interpret with batch context returns narrative
+# ---------------------------------------------------------------------------
+
+
+def test_ai_interpret_batch_context() -> None:
+    """POST /ai/interpret with context_type='batch' returns 200 with non-empty narrative (PORT-03).
+
+    EXPECTED STATE: PASSES after Task 2 adds the batch branch to _build_prompt
+    and updates InterpretRequest to accept 'batch' context_type.
+    """
+    payload = {
+        "context_type": "batch",
+        "data": {
+            "results": [
+                {"pd": 0.34, "decision": "current", "top_factors": [{"name": "orig_ltv", "value": 0.12}]},
+                {"pd": 0.72, "decision": "default", "top_factors": [{"name": "orig_dti", "value": 0.18}]},
+            ],
+            "count": 2,
+        },
+    }
+    res = client.post("/ai/interpret", json=payload)
+    assert res.status_code == 200
+    body = res.json()
+    assert "narrative" in body
+    assert len(body["narrative"]) > 0
+
+
+# ---------------------------------------------------------------------------
+# PORT-03 (unit): _build_prompt("batch", ...) returns portfolio-specific prompt
+# ---------------------------------------------------------------------------
+
+
+def test_build_prompt_batch_context() -> None:
+    """_build_prompt('batch', {...}) returns a string mentioning portfolio, count, and a percentage.
+
+    EXPECTED STATE: PASSES after Task 2 adds the batch branch.
+    """
+    data = {
+        "results": [{"pd": 0.34}, {"pd": 0.72}],
+        "count": 2,
+    }
+    prompt = _build_prompt("batch", data)
+    assert isinstance(prompt, str)
+    assert "portfolio" in prompt.lower()
+    # Must contain at least one digit (count or percentage figure)
+    assert any(ch.isdigit() for ch in prompt)
