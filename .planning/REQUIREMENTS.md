@@ -41,10 +41,10 @@
 
 ### Monitoring Panel
 
-- [ ] **MON-01**: UI has a "Model Health" section that loads data from GET /monitoring/summary
-- [ ] **MON-02**: Model Health displays feature drift indicators (green/yellow/red) per feature based on PSI thresholds (green <0.1, yellow 0.1–0.2, red >0.2)
-- [ ] **MON-03**: Model Health displays current AUC value and a simple trend indicator
-- [ ] **MON-04**: Model Health displays AI-written status summary (uses AI-03 narrative)
+- [x] **MON-01**: UI has a "Model Health" section that loads data from GET /monitoring/summary
+- [x] **MON-02**: Model Health displays feature drift indicators (green/yellow/red) per feature based on PSI thresholds (green <0.1, yellow 0.1–0.2, red >0.2)
+- [x] **MON-03**: Model Health displays current AUC value and a simple trend indicator
+- [x] **MON-04**: Model Health displays AI-written status summary (uses AI-03 narrative)
 
 ## v2 Requirements
 
@@ -92,10 +92,10 @@
 | PORT-01 | Phase 3 | Complete |
 | PORT-02 | Phase 3 | Complete |
 | PORT-03 | Phase 3 | Complete |
-| MON-01 | Phase 4 | Pending |
-| MON-02 | Phase 4 | Pending |
-| MON-03 | Phase 4 | Pending |
-| MON-04 | Phase 4 | Pending |
+| MON-01 | Phase 4 | Complete |
+| MON-02 | Phase 4 | Complete |
+| MON-03 | Phase 4 | Complete |
+| MON-04 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 23 total

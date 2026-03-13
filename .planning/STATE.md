@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: "Completed 03-05: Phase 3 human visual verification approved"
-last_updated: "2026-03-13T04:17:41.742Z"
+stopped_at: "Completed 04-01: Monitoring panel drift badges + AUC row"
+last_updated: "2026-03-13T14:58:41.122Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 13
+  completed_plans: 12
   percent: 33
 ---
 
@@ -63,6 +63,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 03-demo-flow-portfolio-dashboard P04 | 3 | 2 tasks | 1 files |
 | Phase 03-demo-flow-portfolio-dashboard P05 | 1 | 0 tasks | 0 files |
 | Phase 03-demo-flow-portfolio-dashboard P05 | 1 | 1 tasks | 0 files |
+| Phase 04-monitoring-panel P01 | 2 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 03-demo-flow-portfolio-dashboard]: Tier colors use inline hex fills in SVG for cross-browser fill attribute compatibility
 - [Phase 03-demo-flow-portfolio-dashboard]: Human verification required for CSS animations, JS timing, SVG rendering, and auto-scroll — cannot be tested by pytest
 - [Phase Phase 03-demo-flow-portfolio-dashboard]: Human visual verification approved — all 20 acceptance checks passed for demo flow animations, sortable portfolio table, SVG donut chart, and AI narrative
+- [Phase 04-monitoring-panel]: Frontend PSI thresholds use MON-02 display values (<0.1 green, 0.1-0.2 yellow, >0.2 red), distinct from backend PSI_ALERT=0.25 constant
+- [Phase 04-monitoring-panel]: renderMonitoringPanel checks payload.available before rendering — no-data fallback shows friendly placeholder when monitoring job not yet run
 
 ### Pending Todos
 
@@ -113,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T04:12:28.232Z
-Stopped at: Completed 03-05: Phase 3 human visual verification approved
+Last session: 2026-03-13T14:58:41.120Z
+Stopped at: Completed 04-01: Monitoring panel drift badges + AUC row
 Resume file: None
