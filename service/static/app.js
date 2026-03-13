@@ -371,16 +371,71 @@ function initModelForm() {
   refreshModels();
 }
 
+function getDriftClass(psi) {
+  // MON-02 display thresholds from requirements (NOT the backend PSI_ALERT=0.25 constant)
+  if (psi < 0.1)  return 'badge-success';
+  if (psi <= 0.2) return 'badge-warning';
+  return 'badge-danger';
+}
+
+function renderDriftIndicators(driftFeatures) {
+  const container = document.getElementById('driftIndicators');
+  if (!container) return;
+  if (!driftFeatures || Object.keys(driftFeatures).length === 0) {
+    container.innerHTML = '<p class="chart-summary">No drift data available.</p>';
+    return;
+  }
+  const badges = Object.entries(driftFeatures).map(([name, data]) => {
+    const cls = getDriftClass(data.psi || 0);
+    const psiLabel = (data.psi || 0).toFixed(3);
+    return `<span class="badge ${cls} drift-feature-badge" title="PSI: ${psiLabel}">${name}</span>`;
+  }).join('');
+  container.innerHTML = `
+    <p class="chart-summary drift-legend">Feature drift (PSI): <span class="drift-key drift-ok">green &lt;0.1</span> &middot; <span class="drift-key drift-warn">yellow 0.1&ndash;0.2</span> &middot; <span class="drift-key drift-alert">red &gt;0.2</span></p>
+    <div class="drift-badges">${badges}</div>`;
+}
+
+function renderAucRow(perfDrift) {
+  const container = document.getElementById('modelAucRow');
+  if (!container) return;
+  if (!perfDrift || perfDrift.latest_auc == null) {
+    container.innerHTML = '<p class="chart-summary">AUC: Not yet available (labels pending)</p>';
+    return;
+  }
+  const auc = perfDrift.latest_auc.toFixed(2);
+  const trend = perfDrift.trend || 'unknown';
+  const trendBadge = trend === 'improving'
+    ? '<span class="badge badge-success">Improving</span>'
+    : trend === 'degrading'
+      ? '<span class="badge badge-danger">Degrading</span>'
+      : '<span class="badge">Stable</span>';
+  container.innerHTML = `<p class="chart-summary">AUC: <strong>${auc}</strong> ${trendBadge}</p>`;
+}
+
+function renderMonitoringPanel(payload) {
+  if (!payload || !payload.available) {
+    const container = document.getElementById('driftIndicators');
+    if (container) container.innerHTML = '<p class="chart-summary">No monitoring data yet. Run a monitoring job to see results.</p>';
+    const aucContainer = document.getElementById('modelAucRow');
+    if (aucContainer) aucContainer.innerHTML = '';
+    return;
+  }
+  renderDriftIndicators(payload.drift_features);
+  renderAucRow(payload.perf_drift);
+}
+
 async function loadMonitoring() {
   try {
     const monitoringPayload = await fetch("/monitoring/summary").then(readJson);
-    setOutput("monitoringView", monitoringPayload);
+    renderMonitoringPanel(monitoringPayload);
     setNarrative("monitoringNarrative", null); // clear previous
     if (monitoringPayload.available) {
-      fetchNarrative("monitoring", monitoringPayload).then((narrative) => setNarrative("monitoringNarrative", narrative));
+      fetchNarrative("monitoring", monitoringPayload)
+        .then((narrative) => setNarrative("monitoringNarrative", narrative));
     }
   } catch (error) {
-    setOutput("monitoringView", error.message, true);
+    const container = document.getElementById('driftIndicators');
+    if (container) container.innerHTML = `<p class="mono error">${error.message}</p>`;
     setNarrative("monitoringNarrative", null);
   }
 }
