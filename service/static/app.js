@@ -387,7 +387,76 @@ function initMonitoringSection() {
   loadMonitoring();
 }
 
+function setStepState(stepIndex, state) {
+  const steps = document.querySelectorAll('.demo-step');
+  if (steps[stepIndex]) steps[stepIndex].dataset.state = state;
+}
+
+async function pollJobById(jobId, intervalMs = 3000, timeoutMs = 120000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const job = await fetch(`/jobs/${jobId}`).then(readJson);
+    if (job.status === 'succeeded') return job;
+    if (job.status === 'failed') throw new Error(job.error || 'Job failed');
+    await new Promise(res => setTimeout(res, intervalMs));
+  }
+  throw new Error(`Timeout: job ${jobId} did not complete within ${timeoutMs / 1000}s`);
+}
+
+async function submitJobWithRetry(jobType, payload, stepIndex) {
+  setStepState(stepIndex, 'active');
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const created = await fetch(`/jobs/${jobType}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }).then(readJson);
+      await pollJobById(created.id);
+      setStepState(stepIndex, 'done');
+      return;
+    } catch (err) {
+      if (attempt === 0) continue; // silent retry
+      throw err; // surface on second failure
+    }
+  }
+}
+
+function showDemoError(stepIndex, err) {
+  setStepState(stepIndex, 'failed');
+  // Grey out remaining steps
+  const steps = document.querySelectorAll('.demo-step');
+  for (let i = stepIndex + 1; i < steps.length; i++) {
+    steps[i].dataset.state = 'pending';
+  }
+
+  // Inject error summary below the checklist
+  const checklist = document.getElementById('demoChecklist');
+  const existing = document.getElementById('demoErrorSummary');
+  if (existing) existing.remove();
+
+  const summary = document.createElement('div');
+  summary.id = 'demoErrorSummary';
+  summary.className = 'demo-error-summary';
+  const shortMsg = err.message ? err.message.split('\n')[0].slice(0, 120) : 'Step failed';
+  summary.innerHTML = `
+    <details>
+      <summary>Step failed: ${shortMsg}</summary>
+      <pre>${err.message || ''}</pre>
+    </details>
+    <button type="button" id="restartDemoBtn">Restart from beginning</button>
+  `;
+  checklist.after(summary);
+
+  // Wire restart button
+  document.getElementById('restartDemoBtn').addEventListener('click', () => {
+    summary.remove();
+    startDemo();
+  });
+}
+
 function bootstrap() {
+  initDemoButton();
   initForecastForm();
   initScoreForm();
   initBatchForm();
