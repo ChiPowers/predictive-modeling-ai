@@ -23,20 +23,39 @@
       </div>
     </header>
 
-    <section class="card">
+    <section class="card" id="demoCard">
       <h2>Run Demo</h2>
-      <ol>
-        <li>Submit <code>seed-demo</code> job.</li>
-        <li>Submit <code>pipeline</code> job.</li>
-        <li>Optional: submit <code>monitor</code> to generate drift reports.</li>
-        <li>Activate latest model in <strong>Model Lifecycle</strong>.</li>
-        <li>Run <strong>Single Loan Score</strong> and <strong>Forecast</strong>.</li>
+      <div class="button-row">
+        <button type="button" id="runDemoBtn">Run Full Demo</button>
+      </div>
+      <ol id="demoChecklist" class="demo-checklist">
+        <li class="demo-step" data-state="pending" data-step="0">
+          <span class="step-icon"></span>
+          <span class="step-label">Seed demo data</span>
+        </li>
+        <li class="demo-step" data-state="pending" data-step="1">
+          <span class="step-icon"></span>
+          <span class="step-label">Train pipeline</span>
+        </li>
+        <li class="demo-step" data-state="pending" data-step="2">
+          <span class="step-icon"></span>
+          <span class="step-label">Activate model</span>
+        </li>
+        <li class="demo-step" data-state="pending" data-step="3">
+          <span class="step-icon"></span>
+          <span class="step-label">Score loan</span>
+        </li>
+        <li class="demo-step" data-state="pending" data-step="4">
+          <span class="step-icon"></span>
+          <span class="step-label">Run forecast</span>
+        </li>
       </ol>
+      <p id="demoComplete" class="demo-complete" hidden>Your portfolio is ready. Here's what the model found.</p>
     </section>
 
     <section class="card">
       <h2>Background Jobs</h2>
-      <form id="jobForm" class="stack">
+      <form id="jobForm" class="stack" hidden>
         <label>Job Type
           <select name="jobType">
             <option value="seed-demo">seed-demo</option>
@@ -199,7 +218,9 @@
         </label>
         <button type="submit">Batch Score</button>
       </form>
-      <pre id="batchView" class="mono">No batch result yet.</pre>
+      <div id="portfolioTable"></div>
+      <div id="portfolioDonut"></div>
+      <p id="batchNarrative" class="narrative" hidden></p>
     </section>
   </main>
 
