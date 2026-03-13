@@ -7,8 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sklearn.linear_model import LinearRegression
 
-from models import registry
 import service.api as api
+from models import registry
 
 
 @pytest.fixture()

@@ -104,7 +104,7 @@ class ModelLoader:
 
             contrib = row * coefs
             ranked = sorted(
-                zip(feature_names, contrib),
+                zip(feature_names, contrib, strict=False),
                 key=lambda x: abs(float(x[1])),
                 reverse=True,
             )
@@ -126,7 +126,7 @@ class ModelLoader:
                     vals = vals[:, :, 1]  # positive-class SHAP
                 row_vals = vals[0]
                 ranked = sorted(
-                    zip(feature_names, row_vals),
+                    zip(feature_names, row_vals, strict=False),
                     key=lambda x: abs(x[1]),
                     reverse=True,
                 )
@@ -146,7 +146,7 @@ class ModelLoader:
         if hasattr(predictor, "feature_importances_"):
             importances = predictor.feature_importances_
             ranked = sorted(
-                zip(feature_names, importances),
+                zip(feature_names, importances, strict=False),
                 key=lambda x: x[1],
                 reverse=True,
             )
@@ -192,7 +192,7 @@ class ModelLoader:
         pd_scores = self._predict_proba(combined)
 
         results: list[tuple[float, str, list[Factor]]] = []
-        for i, ((features, threshold), pd_score) in enumerate(zip(records, pd_scores)):
+        for i, ((_features, threshold), pd_score) in enumerate(zip(records, pd_scores, strict=False)):
             decision = "default" if pd_score >= threshold else "current"
             row_df = combined.iloc[[i]]
             factors = self._top_factors(row_df)

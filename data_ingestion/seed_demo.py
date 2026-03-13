@@ -1,11 +1,9 @@
 """Generate synthetic Fannie-like combined files for demo environments."""
 from __future__ import annotations
 
+import random
 from datetime import datetime
 from pathlib import Path
-import random
-
-import pandas as pd
 
 
 def _add_months(mm_yyyy: str, offset: int) -> str:

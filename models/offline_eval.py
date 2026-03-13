@@ -31,10 +31,8 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional
 
 from models.policy import Decision, Policy
-
 
 # ---------------------------------------------------------------------------
 # Metrics container
@@ -61,7 +59,7 @@ class PolicyMetrics:
     expected_loss_rate: float        # sum(PD × LGD, approved) / n_total
 
     # Only populated when actual default labels are supplied
-    actual_default_rate_approved: Optional[float] = None
+    actual_default_rate_approved: float | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +70,7 @@ class PolicyMetrics:
 def evaluate_policy(
     policy: Policy,
     pd_scores: list[float],
-    actual_defaults: Optional[list[int]] = None,
+    actual_defaults: list[int] | None = None,
     lgd: float = 1.0,
 ) -> PolicyMetrics:
     """
@@ -105,7 +103,7 @@ def evaluate_policy(
     decline_count = 0
     approved_defaults: list[int] = []
 
-    for i, (score, decision) in enumerate(zip(pd_scores, decisions)):
+    for i, (score, decision) in enumerate(zip(pd_scores, decisions, strict=False)):
         if decision == Decision.APPROVE:
             approved_pd.append(score)
             if actual_defaults is not None:
@@ -123,7 +121,7 @@ def evaluate_policy(
     mean_pd_approved = (sum(approved_pd) / n_approved) if n_approved else 0.0
     expected_loss_rate = (sum(p * lgd for p in approved_pd) / n) if approved_pd else 0.0
 
-    actual_default_rate_approved: Optional[float] = None
+    actual_default_rate_approved: float | None = None
     if actual_defaults is not None and approved_defaults:
         actual_default_rate_approved = sum(approved_defaults) / len(approved_defaults)
 
@@ -150,7 +148,7 @@ def evaluate_policy(
 def compare_policies(
     policies: list[Policy],
     pd_scores: list[float],
-    actual_defaults: Optional[list[int]] = None,
+    actual_defaults: list[int] | None = None,
     lgd: float = 1.0,
     reports_dir: str = "reports",
 ) -> list[PolicyMetrics]:
@@ -361,6 +359,7 @@ def _beta_variate(alpha: float, beta: float, rng) -> float:
 
 if __name__ == "__main__":
     import sys
+
     from models.policy import Policy, PolicyThresholds
 
     reports_dir = sys.argv[1] if len(sys.argv) > 1 else "reports"

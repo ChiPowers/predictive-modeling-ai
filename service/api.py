@@ -1,21 +1,19 @@
 """FastAPI prediction service."""
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
 import json
 import os
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, AsyncGenerator
+from typing import Any
 
 import anthropic
-
 import pandas as pd
-from fastapi import FastAPI, HTTPException, status
-from fastapi import Depends
-from fastapi.responses import FileResponse
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from config.settings import settings
@@ -29,26 +27,26 @@ from service.schemas import (
     ActivateModelRequest,
     ActiveModelResponse,
     ApiMetadataResponse,
-    BatchScoreRequest,
-    BatchScoreResponse,
     AuthLoginRequest,
     AuthMeResponse,
     AuthRegisterRequest,
     AuthTokenResponse,
+    BatchScoreRequest,
+    BatchScoreResponse,
     InterpretRequest,
     InterpretResponse,
     JobListResponse,
     JobStatusResponse,
-    MonitorJobRequest,
-    SeedDemoJobRequest,
+    ModelArtifactStatus,
     ModelCatalogResponse,
     ModelEntryResponse,
-    ModelArtifactStatus,
     ModelVersionResponse,
     MonitoringSummaryResponse,
+    MonitorJobRequest,
     PipelineJobRequest,
     ScoreRequest,
     ScoreResponse,
+    SeedDemoJobRequest,
     TrainJobRequest,
 )
 from training.trainer import PROPHET_FORECAST_COLS
@@ -322,7 +320,7 @@ def _score_with_model(model_obj: Any, features: dict[str, Any], threshold: float
 
 
 def _require_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_AUTH_BEARER),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_AUTH_BEARER),  # noqa: B008
 ) -> str:
     if not settings.auth_enabled:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Auth disabled")

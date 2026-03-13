@@ -21,9 +21,9 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
 def _register_and_login(client: TestClient, username: str, password: str) -> str:
     r = client.post("/auth/register", json={"username": username, "password": password})
     assert r.status_code == 201
-    l = client.post("/auth/login", json={"username": username, "password": password})
-    assert l.status_code == 200
-    return l.json()["access_token"]
+    login = client.post("/auth/login", json={"username": username, "password": password})
+    assert login.status_code == 200
+    return login.json()["access_token"]
 
 
 def test_auth_register_login_me(client: TestClient) -> None:

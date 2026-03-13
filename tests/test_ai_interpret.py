@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import anthropic
 import pytest
 from fastapi.testclient import TestClient
 
-import anthropic
 import service.api as api
 
 # ---------------------------------------------------------------------------

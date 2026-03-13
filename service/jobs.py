@@ -1,16 +1,17 @@
 """Background job orchestration for long-running backend tasks."""
 from __future__ import annotations
 
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
-from typing import Any, Callable
+from typing import Any
 from uuid import uuid4
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _normalize(value: Any) -> Any:
@@ -23,7 +24,7 @@ def _normalize(value: Any) -> Any:
         return [_normalize(v) for v in value]
     if isinstance(value, tuple):
         return [_normalize(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
+    if isinstance(value, str | int | float | bool) or value is None:
         return value
     return str(value)
 

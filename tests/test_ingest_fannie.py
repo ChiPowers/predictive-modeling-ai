@@ -14,7 +14,6 @@ from data_ingestion.schema import (
     PERFORMANCE_SCHEMA,
 )
 
-
 # ---------------------------------------------------------------------------
 # Schema column list tests
 # ---------------------------------------------------------------------------
@@ -194,6 +193,7 @@ def test_normalize_blanks() -> None:
 def test_ingest_origination_no_files(tmp_path, monkeypatch) -> None:
     """ingest_origination returns empty list when directory has no matching files."""
     import yaml
+
     from data_ingestion import ingest_fannie
 
     cfg = {
@@ -224,6 +224,7 @@ def test_ingest_origination_no_files(tmp_path, monkeypatch) -> None:
 def test_ingest_origination_with_synthetic_file(tmp_path, monkeypatch) -> None:
     """End-to-end test: write a synthetic pipe-delimited file, ingest it."""
     import yaml
+
     from data_ingestion import ingest_fannie
 
     orig_dir = tmp_path / "orig"
@@ -267,6 +268,7 @@ def test_ingest_origination_with_synthetic_file(tmp_path, monkeypatch) -> None:
 def test_ingest_all_falls_back_to_combined_file(tmp_path, monkeypatch) -> None:
     """When classic files are absent, combined tape should be split automatically."""
     import yaml
+
     from data_ingestion import ingest_fannie
 
     orig_dir = tmp_path / "orig"

@@ -25,10 +25,10 @@ Usage
 """
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
 
-import hashlib
 import mlflow
 import mlflow.sklearn
 import numpy as np
@@ -92,7 +92,7 @@ class DemoTrendForecaster:
         self._intercept: float = 0.0
         self._band: float = 0.01
 
-    def fit(self, ts: pd.DataFrame) -> "DemoTrendForecaster":
+    def fit(self, ts: pd.DataFrame) -> DemoTrendForecaster:
         hist = ts[["ds", "y"]].copy().sort_values("ds").reset_index(drop=True)
         hist["ds"] = pd.to_datetime(hist["ds"], errors="coerce")
         hist = hist.dropna(subset=["ds"])

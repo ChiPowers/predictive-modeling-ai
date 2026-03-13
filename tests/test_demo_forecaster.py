@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from training.trainer import DemoTrendForecaster, PROPHET_FORECAST_COLS
+from training.trainer import PROPHET_FORECAST_COLS, DemoTrendForecaster
 
 
 def test_demo_trend_forecaster_contract() -> None:

@@ -23,7 +23,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class Decision(str, Enum):
@@ -53,7 +52,7 @@ class PolicyThresholds:
 
     approve_threshold: float
     decline_threshold: float
-    review_capacity: Optional[float] = None
+    review_capacity: float | None = None
 
     def __post_init__(self) -> None:
         if not (0.0 < self.approve_threshold < self.decline_threshold < 1.0):

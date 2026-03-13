@@ -15,6 +15,7 @@ def test_load_unknown_source_raises_value_error() -> None:
 def test_from_csv(tmp_path) -> None:
     """from_csv should return a non-empty DataFrame."""
     import pandas as pd
+
     from data_ingestion.sources import from_csv
 
     csv_file = tmp_path / "sample.csv"

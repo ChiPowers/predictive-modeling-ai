@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -31,7 +31,7 @@ def _active_path(namespace: str | None = None) -> Path:
 
 
 def _utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _sha256(path: Path) -> str:
@@ -76,7 +76,7 @@ def save(
     alias_path = base_dir / f"{name}.joblib"
     joblib.dump(model, alias_path)
 
-    version_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}_{uuid4().hex[:8]}"
+    version_id = f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%S')}_{uuid4().hex[:8]}"
     version_filename = f"{name}__{version_id}.joblib"
     version_path = base_dir / version_filename
     shutil.copy2(alias_path, version_path)

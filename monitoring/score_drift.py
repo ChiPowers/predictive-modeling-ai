@@ -16,7 +16,6 @@ results = run_score_drift(
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +39,7 @@ KS_STAT_ALERT = 0.30
 def _percentile_dict(series: pd.Series) -> dict[str, float]:
     arr = series.dropna().to_numpy(dtype=float)
     values = np.nanpercentile(arr, REPORT_PERCENTILES).tolist()
-    return {f"p{p}": round(v, 6) for p, v in zip(REPORT_PERCENTILES, values)}
+    return {f"p{p}": round(v, 6) for p, v in zip(REPORT_PERCENTILES, values, strict=False)}
 
 
 def run_score_drift(
