@@ -23,7 +23,7 @@
 ### Demo Flow
 
 - [x] **DEMO-01**: UI has a single "Run Full Demo" button that replaces the 5-step numbered instruction list
-- [ ] **DEMO-02**: Demo flow auto-executes: seed-demo job → pipeline job → activate latest model → populate score form → run score → run forecast, in sequence
+- [x] **DEMO-02**: Demo flow auto-executes: seed-demo job → pipeline job → activate latest model → populate score form → run score → run forecast, in sequence
 - [x] **DEMO-03**: Demo flow shows animated step-by-step progress (each step checks off as it completes)
 - [x] **DEMO-04**: Demo flow ends with a summary narrative: "Your portfolio is ready. Here's what the model found."
 
@@ -86,7 +86,7 @@
 | SCEN-02 | Phase 2 | Complete |
 | SCEN-03 | Phase 2 | Complete |
 | DEMO-01 | Phase 3 | Complete |
-| DEMO-02 | Phase 3 | Pending |
+| DEMO-02 | Phase 3 | Complete |
 | DEMO-03 | Phase 3 | Complete |
 | DEMO-04 | Phase 3 | Complete |
 | PORT-01 | Phase 3 | Complete |

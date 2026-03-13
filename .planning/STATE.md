@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-02-PLAN.md — DOM skeleton and CSS for demo checklist and portfolio dashboard
-last_updated: "2026-03-13T02:43:32.842Z"
+stopped_at: Completed 03-03-PLAN.md — runFullDemo() orchestration in app.js
+last_updated: "2026-03-13T03:15:20.055Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 11
-  completed_plans: 7
+  completed_plans: 9
   percent: 33
 ---
 
@@ -59,6 +59,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-score-panel-redesign P03 | 2 | 1 tasks | 0 files |
 | Phase 02-score-panel-redesign P03 | 5 | 2 tasks | 0 files |
 | Phase 03-demo-flow-portfolio-dashboard P02 | 15 | 2 tasks | 3 files |
+| Phase 03-demo-flow-portfolio-dashboard P03 | 7 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 03-demo-flow-portfolio-dashboard]: demo-step data-state attribute drives CSS state machine — JS updates single attribute to trigger all visual transitions
 - [Phase 03-demo-flow-portfolio-dashboard]: jobForm hidden (not removed) — preserved for JS reuse by initJobsForm() and planned runFullDemo()
 - [Phase 03-demo-flow-portfolio-dashboard]: batchView pre replaced with three semantic containers (#portfolioTable, #portfolioDonut, #batchNarrative) for independent rendering
+- [Phase 03-demo-flow-portfolio-dashboard]: runFullDemo() uses SCENARIOS['Prime Borrower'] for score step — fixed scenario for repeatable demo
+- [Phase 03-demo-flow-portfolio-dashboard]: bootstrap() calls initDemoButton() first so demo button is always wired before other form handlers
 
 ### Pending Todos
 
@@ -102,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T02:43:32.840Z
-Stopped at: Completed 03-02-PLAN.md — DOM skeleton and CSS for demo checklist and portfolio dashboard
+Last session: 2026-03-13T03:15:20.054Z
+Stopped at: Completed 03-03-PLAN.md — runFullDemo() orchestration in app.js
 Resume file: None
