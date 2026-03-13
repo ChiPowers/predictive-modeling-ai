@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-13T02:19:15.879Z"
+stopped_at: Completed 03-02-PLAN.md — DOM skeleton and CSS for demo checklist and portfolio dashboard
+last_updated: "2026-03-13T02:43:32.842Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 11
+  completed_plans: 7
   percent: 33
 ---
 
@@ -58,6 +58,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-score-panel-redesign P02 | 1 | 2 tasks | 1 files |
 | Phase 02-score-panel-redesign P03 | 2 | 1 tasks | 0 files |
 | Phase 02-score-panel-redesign P03 | 5 | 2 tasks | 0 files |
+| Phase 03-demo-flow-portfolio-dashboard P02 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 02-score-panel-redesign]: SVG gauge and error path: all colors use CSS custom properties; error path explicitly hides scorePanel to prevent stale results
 - [Phase 02-score-panel-redesign]: Pre-existing test_forecast_missing_model_returns_503 failure confirmed unrelated to score panel — prophet artifact exists locally, no fix needed for Phase 2
 - [Phase 02-score-panel-redesign]: Human visual verification approved — gauge, badge, factor bars, scenario buttons, and layout all confirmed correct across all three loan scenarios
+- [Phase 03-demo-flow-portfolio-dashboard]: demo-step data-state attribute drives CSS state machine — JS updates single attribute to trigger all visual transitions
+- [Phase 03-demo-flow-portfolio-dashboard]: jobForm hidden (not removed) — preserved for JS reuse by initJobsForm() and planned runFullDemo()
+- [Phase 03-demo-flow-portfolio-dashboard]: batchView pre replaced with three semantic containers (#portfolioTable, #portfolioDonut, #batchNarrative) for independent rendering
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T02:19:15.875Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-demo-flow-portfolio-dashboard/03-CONTEXT.md
+Last session: 2026-03-13T02:43:32.840Z
+Stopped at: Completed 03-02-PLAN.md — DOM skeleton and CSS for demo checklist and portfolio dashboard
+Resume file: None

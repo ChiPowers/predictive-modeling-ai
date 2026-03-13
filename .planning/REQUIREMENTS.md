@@ -22,16 +22,16 @@
 
 ### Demo Flow
 
-- [ ] **DEMO-01**: UI has a single "Run Full Demo" button that replaces the 5-step numbered instruction list
+- [x] **DEMO-01**: UI has a single "Run Full Demo" button that replaces the 5-step numbered instruction list
 - [ ] **DEMO-02**: Demo flow auto-executes: seed-demo job → pipeline job → activate latest model → populate score form → run score → run forecast, in sequence
-- [ ] **DEMO-03**: Demo flow shows animated step-by-step progress (each step checks off as it completes)
-- [ ] **DEMO-04**: Demo flow ends with a summary narrative: "Your portfolio is ready. Here's what the model found."
+- [x] **DEMO-03**: Demo flow shows animated step-by-step progress (each step checks off as it completes)
+- [x] **DEMO-04**: Demo flow ends with a summary narrative: "Your portfolio is ready. Here's what the model found."
 
 ### Portfolio Dashboard
 
-- [ ] **PORT-01**: Batch score results display as a table (columns: loan #, PD score, risk tier, top risk factor) instead of raw JSON
-- [ ] **PORT-02**: Batch score results include a distribution visualization (donut or bar chart by risk tier count)
-- [ ] **PORT-03**: Batch score results include a portfolio-level AI insight (e.g. "2 of 4 loans are high-risk. Average PD is 38%. Consider tightening LTV limits.")
+- [x] **PORT-01**: Batch score results display as a table (columns: loan #, PD score, risk tier, top risk factor) instead of raw JSON
+- [x] **PORT-02**: Batch score results include a distribution visualization (donut or bar chart by risk tier count)
+- [x] **PORT-03**: Batch score results include a portfolio-level AI insight (e.g. "2 of 4 loans are high-risk. Average PD is 38%. Consider tightening LTV limits.")
 
 ### Loan Scenarios
 
@@ -85,13 +85,13 @@
 | SCEN-01 | Phase 2 | Complete |
 | SCEN-02 | Phase 2 | Complete |
 | SCEN-03 | Phase 2 | Complete |
-| DEMO-01 | Phase 3 | Pending |
+| DEMO-01 | Phase 3 | Complete |
 | DEMO-02 | Phase 3 | Pending |
-| DEMO-03 | Phase 3 | Pending |
-| DEMO-04 | Phase 3 | Pending |
-| PORT-01 | Phase 3 | Pending |
-| PORT-02 | Phase 3 | Pending |
-| PORT-03 | Phase 3 | Pending |
+| DEMO-03 | Phase 3 | Complete |
+| DEMO-04 | Phase 3 | Complete |
+| PORT-01 | Phase 3 | Complete |
+| PORT-02 | Phase 3 | Complete |
+| PORT-03 | Phase 3 | Complete |
 | MON-01 | Phase 4 | Pending |
 | MON-02 | Phase 4 | Pending |
 | MON-03 | Phase 4 | Pending |
