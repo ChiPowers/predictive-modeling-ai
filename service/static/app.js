@@ -280,9 +280,15 @@ function initBatchForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ records }),
       }).then(readJson);
-      setOutput("batchView", payload);
+      portfolioSort = { col: 'pd', dir: 'desc' }; // reset sort on new results
+      renderPortfolioTable(payload.results || []);
+      renderDonutChart(payload.results || []);
+      setNarrative("batchNarrative", null);
+      fetchNarrative("batch", payload).then(n => setNarrative("batchNarrative", n));
     } catch (error) {
-      setOutput("batchView", error.message, true);
+      const container = document.getElementById('portfolioTable');
+      if (container) container.innerHTML = `<p class="mono error">${error.message}</p>`;
+      setNarrative("batchNarrative", null);
     }
   });
 }
@@ -668,6 +674,79 @@ function renderPortfolioTable(results) {
       renderPortfolioTable(results);
     });
   });
+}
+
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function arcPath(cx, cy, r, startAngle, endAngle) {
+  const s = polarToCartesian(cx, cy, r, startAngle);
+  const e = polarToCartesian(cx, cy, r, endAngle);
+  const large = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`;
+}
+
+function renderDonutChart(results) {
+  const container = document.getElementById('portfolioDonut');
+  if (!container || !results || results.length === 0) return;
+
+  const TIERS = [
+    { key: 'Low',       color: '#1a7f37' },
+    { key: 'Moderate',  color: '#9a6700' },
+    { key: 'High',      color: '#d97706' },
+    { key: 'Very High', color: '#b42318' },
+  ];
+
+  const counts = {};
+  TIERS.forEach(t => { counts[t.key] = 0; });
+  results.forEach(r => { counts[getRiskTier(r.pd).label]++; });
+
+  const total = results.length;
+  const cx = 90, cy = 90, r = 65, innerR = 38;
+  const width = 260, height = 210;
+
+  // Degenerate case: single tier has all loans
+  const activeTiers = TIERS.filter(t => counts[t.key] > 0);
+  if (activeTiers.length === 1) {
+    const t = activeTiers[0];
+    container.innerHTML = `
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Risk tier distribution">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="${t.color}" />
+        <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="var(--card, #fff)" />
+        <text x="${cx}" y="${cy + 5}" text-anchor="middle" fill="var(--ink)" font-size="11" font-weight="600">${total} ${t.key}</text>
+      </svg>`;
+    return;
+  }
+
+  // Multi-tier arcs
+  let arcs = '';
+  let labels = '';
+  let currentAngle = 0;
+  TIERS.forEach(t => {
+    const count = counts[t.key];
+    if (count === 0) return;
+    const sweep = (count / total) * 360;
+    const endAngle = currentAngle + sweep;
+    const d = arcPath(cx, cy, r, currentAngle, endAngle);
+    arcs += `<path d="${d}" fill="none" stroke="${t.color}" stroke-width="27" />`;
+
+    // Label positioned at arc midpoint
+    const midAngle = currentAngle + sweep / 2;
+    const labelPos = polarToCartesian(cx, cy, r + 22, midAngle);
+    labels += `<text x="${labelPos.x.toFixed(1)}" y="${labelPos.y.toFixed(1)}" text-anchor="middle" fill="var(--ink)" font-size="10">${t.key} (${count})</text>`;
+    currentAngle = endAngle;
+  });
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Risk tier distribution donut chart">
+      ${arcs}
+      <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="var(--card, #fff)" />
+      <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="var(--ink)" font-size="11" font-weight="600">${total}</text>
+      <text x="${cx}" y="${cy + 12}" text-anchor="middle" fill="var(--ink)" font-size="9">loans</text>
+      ${labels}
+    </svg>`;
 }
 
 function bootstrap() {
