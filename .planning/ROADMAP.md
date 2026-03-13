@@ -76,7 +76,11 @@ Plans:
   1. A "Model Health" section loads from GET /monitoring/summary and displays per-feature drift status as green/yellow/red indicators based on PSI thresholds
   2. Current AUC value and a trend indicator (stable/improving/degrading) are visible in the Model Health section
   3. An AI-written status summary appears in the Model Health section explaining drift status and whether retraining is recommended in plain language
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — HTML semantic containers + JS render functions (getDriftClass, renderDriftIndicators, renderAucRow, renderMonitoringPanel) + CSS drift panel rules (Wave 1)
+- [ ] 04-02-PLAN.md — Full test suite run + human visual verification checkpoint (Wave 2)
 
 ## Progress
 
@@ -88,4 +92,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. AI Narrative Backend | 3/3 | Complete   | 2026-03-12 |
 | 2. Score Panel Redesign | 3/3 | Complete   | 2026-03-12 |
 | 3. Demo Flow + Portfolio Dashboard | 5/5 | Complete   | 2026-03-13 |
-| 4. Monitoring Panel | 0/TBD | Not started | - |
+| 4. Monitoring Panel | 0/2 | Not started | - |
