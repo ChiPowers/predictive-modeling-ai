@@ -455,6 +455,148 @@ function showDemoError(stepIndex, err) {
   });
 }
 
+async function runFullDemo() {
+  const btn = document.getElementById('runDemoBtn');
+  const complete = document.getElementById('demoComplete');
+
+  // Step 0: Seed demo data
+  try {
+    await submitJobWithRetry('seed-demo', jobPayloadTemplates['seed-demo'], 0);
+  } catch (err) {
+    showDemoError(0, err);
+    btn.disabled = false;
+    btn.textContent = 'Run Full Demo';
+    return;
+  }
+
+  // Step 1: Train pipeline
+  try {
+    await submitJobWithRetry('pipeline', jobPayloadTemplates['pipeline'], 1);
+  } catch (err) {
+    showDemoError(1, err);
+    btn.disabled = false;
+    btn.textContent = 'Run Full Demo';
+    return;
+  }
+
+  // Step 2: Activate model (sklearn-rf, latest version)
+  setStepState(2, 'active');
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await fetch('/models/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'sklearn-rf' }),
+        }).then(readJson);
+        break;
+      } catch (err) {
+        if (attempt === 0) continue;
+        throw err;
+      }
+    }
+    setStepState(2, 'done');
+  } catch (err) {
+    showDemoError(2, err);
+    btn.disabled = false;
+    btn.textContent = 'Run Full Demo';
+    return;
+  }
+
+  // Step 3: Score loan (Prime Borrower scenario)
+  setStepState(3, 'active');
+  try {
+    let scorePayload;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        scorePayload = await fetch('/score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ features: SCENARIOS['Prime Borrower'], threshold: 0.5 }),
+        }).then(readJson);
+        break;
+      } catch (err) {
+        if (attempt === 0) continue;
+        throw err;
+      }
+    }
+    renderScorePanel(scorePayload);
+    setNarrative('scoreNarrative', null);
+    fetchNarrative('score', scorePayload).then(n => setNarrative('scoreNarrative', n));
+    setStepState(3, 'done');
+  } catch (err) {
+    showDemoError(3, err);
+    btn.disabled = false;
+    btn.textContent = 'Run Full Demo';
+    return;
+  }
+
+  // Step 4: Run forecast
+  setStepState(4, 'active');
+  try {
+    let forecastPayload;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        forecastPayload = await fetch('/forecast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: 'fannie-mae', model: 'prophet', horizon: 24 }),
+        }).then(readJson);
+        break;
+      } catch (err) {
+        if (attempt === 0) continue;
+        throw err;
+      }
+    }
+    renderForecastChart(forecastPayload.forecast || [], 0.5);
+    setNarrative('forecastNarrative', null);
+    fetchNarrative('forecast', { forecast: forecastPayload.forecast || [], threshold: 0.5 }).then(n => setNarrative('forecastNarrative', n));
+    setStepState(4, 'done');
+  } catch (err) {
+    showDemoError(4, err);
+    btn.disabled = false;
+    btn.textContent = 'Run Full Demo';
+    return;
+  }
+
+  // Completion
+  complete.hidden = false;
+  btn.disabled = false;
+  btn.textContent = 'Run Again';
+
+  // Auto-scroll to portfolio section after DOM update
+  const portfolioEl = document.getElementById('portfolioTable');
+  if (portfolioEl) {
+    requestAnimationFrame(() => portfolioEl.closest('section')?.scrollIntoView({ behavior: 'smooth' }));
+  }
+}
+
+function startDemo() {
+  const btn = document.getElementById('runDemoBtn');
+  const complete = document.getElementById('demoComplete');
+  const errorSummary = document.getElementById('demoErrorSummary');
+
+  // Reset all steps to pending
+  document.querySelectorAll('.demo-step').forEach(step => {
+    step.dataset.state = 'pending';
+  });
+
+  // Clear completion and error
+  complete.hidden = true;
+  if (errorSummary) errorSummary.remove();
+
+  btn.disabled = true;
+  btn.textContent = 'Running...';
+
+  runFullDemo();
+}
+
+function initDemoButton() {
+  const btn = document.getElementById('runDemoBtn');
+  if (!btn) return;
+  btn.addEventListener('click', startDemo);
+}
+
 function bootstrap() {
   initDemoButton();
   initForecastForm();
