@@ -597,6 +597,79 @@ function initDemoButton() {
   btn.addEventListener('click', startDemo);
 }
 
+let portfolioSort = { col: 'pd', dir: 'desc' };
+
+function renderPortfolioTable(results) {
+  const container = document.getElementById('portfolioTable');
+  if (!container) return;
+  if (!results || results.length === 0) {
+    container.innerHTML = '<p class="chart-summary">No results.</p>';
+    return;
+  }
+
+  const colMap = {
+    loan: (r, i) => i + 1,
+    pd: (r) => r.pd,
+    tier: (r) => getRiskTier(r.pd).label,
+    factor: (r) => (r.top_factors && r.top_factors[0]) ? r.top_factors[0].name : '—',
+  };
+
+  const sorted = [...results].sort((a, b) => {
+    const aVal = colMap[portfolioSort.col](a, results.indexOf(a));
+    const bVal = colMap[portfolioSort.col](b, results.indexOf(b));
+    const dir = portfolioSort.dir === 'asc' ? 1 : -1;
+    return aVal > bVal ? dir : aVal < bVal ? -dir : 0;
+  });
+
+  const headers = [
+    { key: 'loan', label: 'Loan #' },
+    { key: 'pd',   label: 'PD Score (%)' },
+    { key: 'tier', label: 'Risk Tier' },
+    { key: 'factor', label: 'Top Risk Factor' },
+  ];
+
+  const theadCells = headers.map(h => {
+    const isActive = portfolioSort.col === h.key;
+    const ariaSort = isActive ? (portfolioSort.dir === 'asc' ? 'ascending' : 'descending') : 'none';
+    return `<th data-col="${h.key}" scope="col" aria-sort="${ariaSort}">${h.label}</th>`;
+  }).join('');
+
+  const tbodyRows = sorted.map((r, i) => {
+    const loanNum = results.indexOf(r) + 1;
+    const pdPct = (r.pd * 100).toFixed(1) + '%';
+    const tier = getRiskTier(r.pd);
+    const factor = (r.top_factors && r.top_factors[0]) ? r.top_factors[0].name : '—';
+    return `<tr>
+      <td>${loanNum}</td>
+      <td>${pdPct}</td>
+      <td><span class="badge ${tier.cls}">${tier.label}</span></td>
+      <td>${factor}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <table>
+      <thead><tr>${theadCells}</tr></thead>
+      <tbody>${tbodyRows}</tbody>
+    </table>
+  `;
+
+  // Wire sort click handlers
+  container.querySelectorAll('th[data-col]').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (portfolioSort.col === col) {
+        portfolioSort.dir = portfolioSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        portfolioSort.col = col;
+        portfolioSort.dir = 'asc';
+      }
+      renderPortfolioTable(results);
+    });
+  });
+}
+
 function bootstrap() {
   initDemoButton();
   initForecastForm();
