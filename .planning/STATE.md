@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: "Checkpoint 03-05 — awaiting human visual verification at http://localhost:8000"
-last_updated: "2026-03-13T03:22:54.493Z"
+stopped_at: "Completed 03-05: Phase 3 human visual verification approved"
+last_updated: "2026-03-13T04:12:55.122Z"
 last_activity: 2026-03-12 — Roadmap created, milestone scoped
 progress:
   total_phases: 4
@@ -62,6 +62,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 03-demo-flow-portfolio-dashboard P03 | 7 | 2 tasks | 1 files |
 | Phase 03-demo-flow-portfolio-dashboard P04 | 3 | 2 tasks | 1 files |
 | Phase 03-demo-flow-portfolio-dashboard P05 | 1 | 0 tasks | 0 files |
+| Phase 03-demo-flow-portfolio-dashboard P05 | 1 | 1 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Recent decisions affecting current work:
 - [Phase 03-demo-flow-portfolio-dashboard]: Degenerate single-tier donut uses SVG circle not arc path to avoid 360-degree edge case
 - [Phase 03-demo-flow-portfolio-dashboard]: Tier colors use inline hex fills in SVG for cross-browser fill attribute compatibility
 - [Phase 03-demo-flow-portfolio-dashboard]: Human verification required for CSS animations, JS timing, SVG rendering, and auto-scroll — cannot be tested by pytest
+- [Phase Phase 03-demo-flow-portfolio-dashboard]: Human visual verification approved — all 20 acceptance checks passed for demo flow animations, sortable portfolio table, SVG donut chart, and AI narrative
 
 ### Pending Todos
 
@@ -111,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T03:22:54.490Z
-Stopped at: Checkpoint 03-05 — awaiting human visual verification at http://localhost:8000
+Last session: 2026-03-13T04:12:28.232Z
+Stopped at: Completed 03-05: Phase 3 human visual verification approved
 Resume file: None
