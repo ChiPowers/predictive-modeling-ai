@@ -179,7 +179,7 @@ class AuthMeResponse(BaseModel):
 
 
 class InterpretRequest(BaseModel):
-    context_type: Literal["score", "forecast", "monitoring"]
+    context_type: Literal["score", "forecast", "monitoring", "batch"]
     data: dict[str, Any] = Field(description="Raw model output to interpret")
 
 

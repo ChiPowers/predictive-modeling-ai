@@ -6,6 +6,9 @@ Backend tests (2) will PASS after Task 2 adds the batch prompt branch.
 """
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 from service.api import _build_prompt, app
@@ -145,20 +148,34 @@ def test_seed_demo_job_submits() -> None:
 def test_ai_interpret_batch_context() -> None:
     """POST /ai/interpret with context_type='batch' returns 200 with non-empty narrative (PORT-03).
 
+    Uses the same mock pattern as test_ai_interpret.py — Claude API is not available in CI.
     EXPECTED STATE: PASSES after Task 2 adds the batch branch to _build_prompt
     and updates InterpretRequest to accept 'batch' context_type.
     """
-    payload = {
-        "context_type": "batch",
-        "data": {
-            "results": [
-                {"pd": 0.34, "decision": "current", "top_factors": [{"name": "orig_ltv", "value": 0.12}]},
-                {"pd": 0.72, "decision": "default", "top_factors": [{"name": "orig_dti", "value": 0.18}]},
-            ],
-            "count": 2,
-        },
-    }
-    res = client.post("/ai/interpret", json=payload)
+    mock_content = MagicMock()
+    mock_content.text = "Portfolio looks moderate risk. Recommend quarterly review."
+
+    mock_message = MagicMock()
+    mock_message.content = [mock_content]
+
+    mock_messages = MagicMock()
+    mock_messages.create = AsyncMock(return_value=mock_message)
+
+    mock_client = MagicMock()
+    mock_client.messages = mock_messages
+
+    with patch("service.api._get_anthropic_client", return_value=mock_client, create=True):
+        payload = {
+            "context_type": "batch",
+            "data": {
+                "results": [
+                    {"pd": 0.34, "decision": "current", "top_factors": [{"name": "orig_ltv", "value": 0.12}]},
+                    {"pd": 0.72, "decision": "default", "top_factors": [{"name": "orig_dti", "value": 0.18}]},
+                ],
+                "count": 2,
+            },
+        }
+        res = client.post("/ai/interpret", json=payload)
     assert res.status_code == 200
     body = res.json()
     assert "narrative" in body

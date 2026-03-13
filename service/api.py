@@ -285,6 +285,18 @@ def _build_prompt(context_type: str, data: dict[str, Any]) -> str:
             f"Model monitoring results: {len(drift_features)} features analyzed.{drift_clause}{alert_clause}{auc_clause} "
             "Write a 2-3 sentence plain-language status summary and state whether retraining is recommended."
         )
+    elif context_type == "batch":
+        results = data.get("results", [])
+        count = len(results)
+        high_risk = sum(1 for r in results if r.get("pd", 0) >= 0.50)
+        avg_pd = sum(r.get("pd", 0) for r in results) / count if count else 0
+        return (
+            f"A portfolio of {count} loans was scored. "
+            f"Average default probability: {avg_pd:.0%}. "
+            f"{high_risk} of {count} loans are high-risk (PD >= 50%). "
+            "Write a 2-3 sentence plain-language portfolio summary. "
+            "Include a concrete recommended action for the portfolio manager."
+        )
     else:
         return f"Interpret the following model output: {data}"
 
